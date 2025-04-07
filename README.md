@@ -1,32 +1,33 @@
-# mental-health-companion
+# Mental Health Companion
 AI-powered mental health companion app using Semantic Kernel
 
-Mental Health Companion App: Technical Design Proposal
+## Mental Health Companion App: Technical Design Proposal
 
-Table of Contents
-Overview
-System Architecture
-Repository Structure (Monorepo)
-Frontend Design
-Backend Design (Python)
-Database Design
-API Endpoints
-Authentication & Security
-Deployment Strategy
-Implementation Timeline
-Overview
+## Table of Contents
+- [Overview](#overview)
+- [System Architecture](#system-architecture)
+- [Repository Structure (Monorepo)](#repository-structure-monorepo)
+- [Frontend Design](#frontend-design)
+- [Backend Design (Python)](#backend-design-python)
+- [Database Design](#database-design)
+- [API Endpoints](#api-endpoints)
+- [Authentication & Security](#authentication--security)
+- [Deployment Strategy](#deployment-strategy)
+- [Implementation Timeline](#implementation-timeline)
+
+## Overview
 The Mental Health Companion App is an AI-powered mobile application that helps users track their mood, journal their thoughts, practice mindfulness, and receive personalized insights. The app leverages the Microsoft Semantic Kernel framework to provide AI-driven features while maintaining a user-friendly interface.
 
-Core Features:
+### Core Features:
+- Mood tracking with pattern recognition
+- AI-guided journaling with personalized prompts
+- Sentiment analysis of journal entries
+- Mindfulness exercises tailored to the user's emotional state
+- Weekly insights and recommendations
 
-Mood tracking with pattern recognition
-AI-guided journaling with personalized prompts
-Sentiment analysis of journal entries
-Mindfulness exercises tailored to the user's emotional state
-Weekly insights and recommendations
+## System Architecture
 
-System Architecture
-
+```
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
 │                 │     │                 │     │                 │
 │  React Native   │     │  Azure          │     │  Azure          │
@@ -50,8 +51,11 @@ System Architecture
                  │  Service    │   │  Storage    │
                  │             │   │             │
                  └─────────────┘   └─────────────┘
-User Flow
+```
 
+### User Flow
+
+```
 ┌──────────────┐       ┌──────────────┐       ┌──────────────┐       ┌──────────────┐
 │              │       │              │       │              │       │              │
 │  User Login  │───┬──►│ Home Screen  │◄──────┤ Mood Tracker │◄──┬───┤ Journal Entry│
@@ -64,10 +68,12 @@ User Flow
                        │ Exercises    │       │   Insights   │       │ Recommendations│
                        │              │       │              │       │              │
                        └──────────────┘       └──────────────┘       └──────────────┘
+```
 
-    Repository Structure (Monorepo)
+## Repository Structure (Monorepo)
 
-    mental-health-companion/
+```
+mental-health-companion/
 ├── README.md
 ├── package.json               # Root package.json for JS dependencies
 ├── pyproject.toml             # Root Python project configuration
@@ -109,18 +115,21 @@ User Flow
     ├── bicep/                 # Bicep templates
     ├── scripts/               # Deployment scripts
     └── config/                # Environment configurations
+```
 
-Frontend Design
-Technology Stack
-React Native with Expo
-TypeScript for type safety
-React Navigation for screen navigation
-React Native Paper for UI components
-Context API for state management
+## Frontend Design
 
-Key Screens:
-Home Dashboard    
+### Technology Stack
+- React Native with Expo
+- TypeScript for type safety
+- React Navigation for screen navigation
+- React Native Paper for UI components
+- Context API for state management
 
+### Key Screens:
+#### Home Dashboard    
+
+```javascript
 // frontend/src/screens/HomeScreen.js
 import React, { useEffect, useState } from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
@@ -175,9 +184,11 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
 });
+```
 
-Mood Tracker
+#### Mood Tracker
 
+```javascript
 // frontend/src/screens/MoodTrackerScreen.js
 import React, { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
@@ -248,10 +259,11 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
 });
+```
 
+### API Service
 
-API Service
-
+```typescript
 // frontend/src/services/ApiService.ts
 import { API_URL } from '../constants/api';
 
@@ -296,12 +308,15 @@ class ApiService {
 }
 
 export const apiService = new ApiService();
+```
 
-Backend Design (Python)
-Azure Functions with Semantic Kernel
+## Backend Design (Python)
 
-Kernel Setup
+### Azure Functions with Semantic Kernel
 
+#### Kernel Setup
+
+```python
 # backend/shared/kernel_setup.py
 from semantic_kernel import Kernel
 from semantic_kernel.connectors.ai.open_ai import AzureChatCompletion
@@ -326,10 +341,12 @@ def initialize_kernel():
     kernel.add_chat_service("azure_chat", chat_service)
     
     return kernel
+```
 
-    Journal Plugin
+### Journal Plugin
 
-    # backend/plugins/journal_plugin.py
+```python
+# backend/plugins/journal_plugin.py
 from semantic_kernel.plugin_definition import kernel_function
 
 class JournalPlugin:
@@ -348,10 +365,11 @@ class JournalPlugin:
         # The implementation is handled by the Semantic Kernel
         # This function signature serves as a contract for the AI
         return f"Sentiment analysis for journal entry"
+```
 
+### Journal Prompt Function
 
-Journal Prompt Function
-
+```python
 # backend/api/journal/generate_prompt.py
 import azure.functions as func
 import json
@@ -402,9 +420,11 @@ async def main(req: func.HttpRequest) -> func.HttpResponse:
             status_code=500,
             mimetype="application/json"
         )
+```
 
-Database Client
+### Database Client
 
+```python
 # backend/shared/db_client.py
 from azure.cosmos import CosmosClient, PartitionKey
 import os
@@ -435,13 +455,15 @@ class CosmosDbClient:
             enable_cross_partition_query=True
         )
         return [item async for item in items]
+```
 
+## Database Design
 
-Database Design
-Cosmos DB Collections
+### Cosmos DB Collections
 
-Users
+#### Users
 
+```json
 {
   "id": "user123",
   "email": "user@example.com",
@@ -455,10 +477,11 @@ Users
   ],
   "createdAt": "2025-04-01T12:00:00Z"
 }
+```
 
+#### MoodEntries
 
-MoodEntries
-
+```json
 {
   "id": "mood123",
   "userId": "user123",
@@ -467,8 +490,11 @@ MoodEntries
   "notes": "Presentation at work",
   "timestamp": "2025-04-07T15:30:00Z"
 }
+```
 
-JournalEntries
+#### JournalEntries
+
+```json
 {
   "id": "journal123",
   "userId": "user123",
@@ -481,8 +507,11 @@ JournalEntries
   },
   "timestamp": "2025-04-07T20:15:00Z"
 }
+```
 
-MindfulnessActivities
+#### MindfulnessActivities
+
+```json
 {
   "id": "activity123",
   "name": "5-Minute Breathing",
@@ -492,36 +521,39 @@ MindfulnessActivities
   "description": "A simple breathing exercise for quick stress relief",
   "recommendedFor": ["anxiety", "stress"]
 }
+```
 
-API Endpoints
+## API Endpoints
 
-Authentication
-POST /api/auth/register - Register new user
-POST /api/auth/login - Log in user
-POST /api/auth/logout - Log out user
+### Authentication
+- `POST /api/auth/register` - Register new user
+- `POST /api/auth/login` - Log in user
+- `POST /api/auth/logout` - Log out user
 
-Mood Tracking
-POST /api/mood - Record mood entry
-GET /api/mood - Get mood history
-GET /api/mood/trends - Get mood trend analysis
+### Mood Tracking
+- `POST /api/mood` - Record mood entry
+- `GET /api/mood` - Get mood history
+- `GET /api/mood/trends` - Get mood trend analysis
 
-Journal
-POST /api/journal - Create journal entry
-GET /api/journal - Get journal entries
-GET /api/journal/prompt - Get AI-generated prompt
-POST /api/journal/analyze - Analyze journal sentiment
+### Journal
+- `POST /api/journal` - Create journal entry
+- `GET /api/journal` - Get journal entries
+- `GET /api/journal/prompt` - Get AI-generated prompt
+- `POST /api/journal/analyze` - Analyze journal sentiment
 
-Mindfulness
-GET /api/mindfulness/exercises - List exercises
-GET /api/mindfulness/recommended - Get personalized recommendations
-POST /api/mindfulness/track - Record completed activity
+### Mindfulness
+- `GET /api/mindfulness/exercises` - List exercises
+- `GET /api/mindfulness/recommended` - Get personalized recommendations
+- `POST /api/mindfulness/track` - Record completed activity
 
-Insights
-GET /api/insights/weekly - Get weekly summary and insights
+### Insights
+- `GET /api/insights/weekly` - Get weekly summary and insights
 
-Authentication & Security
-Authentication Flow
+## Authentication & Security
 
+### Authentication Flow
+
+```
 ┌──────────────┐     ┌───────────────┐     ┌─────────────────┐     ┌───────────────┐
 │              │     │               │     │                 │     │               │
 │ User         │────►│ React Native  │────►│ Azure AD B2C    │────►│ Token         │
@@ -542,9 +574,11 @@ Authentication Flow
                      │ Functions     │     │ & Authorize     │
                      │               │     │                 │
                      └───────────────┘     └─────────────────┘
+```
 
-Azure AD B2C Implementation
+### Azure AD B2C Implementation
 
+```python
 # backend/auth/validate_token.py
 import azure.functions as func
 import json
@@ -576,11 +610,13 @@ async def validate_token(token):
     except Exception as e:
         logging.error(f"Token validation error: {str(e)}")
         return None
+```
 
-Deployment Strategy
+## Deployment Strategy
 
-CI/CD Pipeline
+### CI/CD Pipeline
 
+```yaml
 # .github/workflows/main.yml
 name: Build and Deploy
 
@@ -651,45 +687,53 @@ jobs:
           app_location: "frontend/build"
           output_location: ""
           skip_app_build: true
+```
 
- Azure Resources
+### Azure Resources
 The following Azure resources will be provisioned:
 
-Azure Functions App (for the backend)
-Azure Static Web Apps (for the frontend)
-Azure Cosmos DB (for the database)
-Azure OpenAI Service (for AI capabilities)
-Azure AD B2C (for authentication)
-Azure Blob Storage (for media files)
-Azure Application Insights (for monitoring)
+- Azure Functions App (for the backend)
+- Azure Static Web Apps (for the frontend)
+- Azure Cosmos DB (for the database)
+- Azure OpenAI Service (for AI capabilities)
+- Azure AD B2C (for authentication)
+- Azure Blob Storage (for media files)
+- Azure Application Insights (for monitoring)
+
 Resource provisioning will be automated using Bicep templates in the infrastructure directory.
 
-Implementation Timeline
-Phase 1: Foundation (Weeks 1-2)
-Set up monorepo structure and CI/CD pipeline
-Create basic React Native app with navigation
-Implement Azure AD B2C authentication
-Set up Azure Functions with Semantic Kernel
-Phase 2: Core Features (Weeks 3-4)
-Implement mood tracking UI and API
-Develop basic journaling functionality
-Configure database schema and connections
-Create initial AI plugin templates
-Phase 3: AI Integration (Weeks 5-6)
-Implement journal prompt generation with Semantic Kernel
-Develop sentiment analysis for journal entries
-Create mood pattern recognition
-Build mindfulness exercise recommendation system
-Phase 4: Refinement (Weeks 7-8)
-Add weekly insights and personalized recommendations
-Implement data visualization for mood trends
-Conduct user testing and gather feedback
-Optimize performance and fix bugs
-Phase 5: Launch Preparation (Weeks 9-10)
-Conduct security audit and implement fixes
-Perform final UI/UX refinements
-Prepare app store listings
-Deploy to production environment
+## Implementation Timeline
+
+### Phase 1: Foundation (Weeks 1-2)
+- Set up monorepo structure and CI/CD pipeline
+- Create basic React Native app with navigation
+- Implement Azure AD B2C authentication
+- Set up Azure Functions with Semantic Kernel
+
+### Phase 2: Core Features (Weeks 3-4)
+- Implement mood tracking UI and API
+- Develop basic journaling functionality
+- Configure database schema and connections
+- Create initial AI plugin templates
+
+### Phase 3: AI Integration (Weeks 5-6)
+- Implement journal prompt generation with Semantic Kernel
+- Develop sentiment analysis for journal entries
+- Create mood pattern recognition
+- Build mindfulness exercise recommendation system
+
+### Phase 4: Refinement (Weeks 7-8)
+- Add weekly insights and personalized recommendations
+- Implement data visualization for mood trends
+- Conduct user testing and gather feedback
+- Optimize performance and fix bugs
+
+### Phase 5: Launch Preparation (Weeks 9-10)
+- Conduct security audit and implement fixes
+- Perform final UI/UX refinements
+- Prepare app store listings
+- Deploy to production environment
+
 This design proposal provides a comprehensive blueprint for building the Mental Health Companion App using modern technologies including React Native, Azure Functions, Semantic Kernel, and Azure Cosmos DB. The monorepo structure facilitates collaboration between frontend and backend development while ensuring consistency across the application.
 
        
