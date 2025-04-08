@@ -1,7 +1,7 @@
 # Mental Health Companion
 AI-powered mental health companion app using Semantic Kernel
 
-## Mental Health Companion App: Technical Design Proposal
+## Mental Health Companion App: DRAFT - Technical Design Proposal
 
 ## Table of Contents
 - [Overview](#overview)
