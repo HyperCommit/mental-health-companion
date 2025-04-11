@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+semantic-kernel
+huggingface-hub
+dotenv
+firebase-admin
+pydantic
+chainlit
+pytest
+pytest-asyncio
