@@ -2,7 +2,7 @@
 AI-powered mental health companion app using Semantic Kernel, FastAPI, and Chainlit.
 
 ## Table of Contents
-- [1. Executive Summary](#1-executive-summary)
+- [1. Overview](#1-overview)
 - [2. User Flows](#2-user-flows)
 - [3. System Architecture](#3-system-architecture)
 - [4. Monorepo Structure](#4-monorepo-structure)
