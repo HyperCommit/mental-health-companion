@@ -1,6 +1,6 @@
 import os
 import semantic_kernel as sk
-from semantic_kernel.connectors.ai.open_source import HuggingFaceTextCompletion
+from semantic_kernel.connectors.ai.hugging_face import HuggingFaceTextCompletion
 from dotenv import load_dotenv
 from infrastructure.config.settings import get_settings
 
