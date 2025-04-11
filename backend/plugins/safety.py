@@ -1,4 +1,5 @@
-from semantic_kernel.plugin_definition import kernel_function, KernelPlugin
+from semantic_kernel.functions.kernel_plugin import KernelPlugin
+from semantic_kernel.functions.kernel_function_decorator import kernel_function
 
 class SafetyPlugin(KernelPlugin):
     """Plugin for identifying potential crisis situations and providing appropriate responses"""
