@@ -17,6 +17,7 @@ AI-powered mental health companion app using Semantic Kernel, FastAPI, and Chain
 - [13. Tiered Features](#13-tiered-features)
 - [14. Implementation Timeline](#14-implementation-timeline)
 - [15. Testing Strategy](#15-testing-strategy)
+- [16. Build and Deployment](#16-build-and-deployment)
 
 ## 1. Overview
 
@@ -1404,3 +1405,36 @@ def test_generate_journal_prompt():
     assert response.status_code == 200
     assert response.json()["prompt"] == "What made you happy today?"
 ```
+
+## 16. Build and Deployment
+
+### 16.1 Build and Deployment Steps
+
+The project uses GitHub Actions for CI/CD to automate testing, building, and deploying the application. Below are the steps included in the pipeline:
+
+#### 16.1.1 Testing
+1. Checkout the repository using `actions/checkout@v3`.
+2. Set up Python environment using `actions/setup-python@v4` with Python version 3.10.
+3. Install dependencies using `pip install -r requirements.txt`.
+4. Run tests using `pytest` and generate a coverage report.
+
+#### 16.1.2 Building
+1. Build the backend container:
+   - Use `podman build` to create a container image for the backend.
+   - Tag the image with the latest commit SHA and `latest` tag.
+2. Build the frontend container:
+   - Navigate to the `frontend/chainlit` directory.
+   - Use `chainlit build` to build the frontend application.
+   - Use `podman build` to create a container image for the frontend.
+   - Tag the image with the latest commit SHA and `latest` tag.
+
+#### 16.1.3 Deployment
+1. Login to Azure Container Registry using `azure/docker-login@v1`.
+2. Push the backend and frontend container images to the Azure Container Registry.
+3. Deploy the backend to Azure Container Instances:
+   - Use `az container create` to deploy the backend container.
+   - Configure environment variables such as `COSMOS_CONNECTION_STRING`, `FIREBASE_CONFIG`, `PRIMARY_MODEL`, and `SENTIMENT_MODEL`.
+4. Deploy the frontend to Azure Container Instances:
+   - Use `az container create` to deploy the frontend container.
+   - Expose the application on port 8501.
+````
