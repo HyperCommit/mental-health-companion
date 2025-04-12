@@ -1,4 +1,4 @@
-#!/Users/pushkar/codezilla/mental-health-companion/venv/bin/python3.13
+#!/Users/pushkar/codezilla/mental-health-companion/venv/bin/python3.10
 # -*- coding: utf-8 -*-
 # Copyright 2024 Google LLC
 #
