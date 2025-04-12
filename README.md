@@ -1213,7 +1213,6 @@ jobs:
 
 ## 13. Tiered Features
 
-### 13.1 Free Tier Features
 - Basic mood tracking (3 entries per day)
 - Standard journaling (text only)
 - 5 basic mindfulness exercises
@@ -1221,28 +1220,24 @@ jobs:
 - Basic conversational support
 - 30-day data retention
 
-### 13.2 Premium Tier Features (Paid)
-- Unlimited mood tracking
-- Advanced journaling (tags, categories, search)
-- Full library of mindfulness exercises (25+)
-- Daily personalized insights
-- Advanced pattern recognition
-- Unlimited data history
-- Priority response
-- Export capabilities (PDF, CSV)
-- Scheduled check-ins
+
 
 ## 14. Implementation Timeline
 
-### Phase 1: Foundation (Weeks 1-4)
+### Phase 1: MVP Development
 - Project setup and infrastructure configuration
 - Firebase Authentication integration
 - Basic Chainlit conversational interface
 - Core Semantic Kernel plugins
 - Initial Cosmos DB implementation
 - Basic mood tracking and journaling
+- User feedback integration
+- Performance optimization
+- Security hardening
+- Documentation completion
+- Launch preparation
 
-### Phase 2: Core Features (Weeks 5-8)
+### Phase 2: Core Features
 - Complete plugin implementation
 - Advanced mood analysis
 - Mindfulness exercise library
@@ -1250,20 +1245,13 @@ jobs:
 - Premium tier feature implementation
 - Enhanced conversational capabilities
 
-### Phase 3: Mobile Extension (Weeks 9-14)
+### Phase 3: Mobile Extension
 - React Native app development
 - Mobile UI components
 - Cross-platform sync
 - Push notifications
 - Offline capabilities
 - App store preparation
-
-### Phase 4: Refinement (Weeks 15-18)
-- User feedback integration
-- Performance optimization
-- Security hardening
-- Documentation completion
-- Launch preparation
 
 ## 15. Testing Strategy
 
