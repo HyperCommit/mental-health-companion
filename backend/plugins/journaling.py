@@ -60,3 +60,15 @@ class JournalingPlugin(KernelPlugin):
         """Retrieve journal entries matching the query."""
         entries = await self._memory.search("journal_entries", query)
         return [{"text": e.text, "timestamp": e.metadata["timestamp"]} for e in entries]
+
+    @kernel_function(description="Generates a thoughtful journal prompt based on the user's mood")
+    async def generate_prompt(self, mood: str) -> str:
+        """Generates a journal prompt customized for the user's current mood"""
+        if mood == "anxious":
+            return "What is causing your anxiety today? What would help you feel calmer?"
+        elif mood == "happy":
+            return "What made you happy today? How can you carry this happiness forward?"
+        elif mood == "stressed":
+            return "What is in your control right now? What is out of your control?"
+        else:
+            return "Describe your current feelings and what led to them."

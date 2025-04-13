@@ -88,3 +88,15 @@ class SafetyPlugin(KernelPlugin):
             """
         else:
             return ""  # No resources needed for no risk
+
+    @kernel_function(description="Provides grounding prompts for users in crisis")
+    async def provide_grounding_prompts(self, risk_level: str) -> str:
+        """Provide grounding prompts based on the risk level."""
+        if risk_level == "high":
+            return "Name five things you can see, four things you can touch, three things you can hear, two things you can smell, and one thing you can taste."
+        elif risk_level == "moderate":
+            return "Take a deep breath and describe your surroundings. What is one thing you can do to feel safer?"
+        elif risk_level == "low":
+            return "What is one small step you can take to improve your mood right now?"
+        else:
+            return "Focus on your breathing and describe how you feel in this moment."
