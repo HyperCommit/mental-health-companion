@@ -1226,7 +1226,15 @@ jobs:
 
 ### Phase 1: MVP Development
 - Repository Project Setup <span style="color: green;">✔️ Completed</span>
-- Testing Strategy Setup <span style="color: green;">✔️ Completed</span>
+- Testing Strategy Setup 
+    - Unit Testing 
+        - Plugin Unit Tests <span style="color: green;">✔️ Completed</span>
+        - API Unit Tests
+    - Integration Testing 
+        - Database Integration Tests <span style="color: green;">✔️ Completed</span>
+        - Plugin Integration Tests
+        - API Integration Tests
+- Core API Development 
 - Firebase Authentication integration
 - Basic Chainlit conversational interface
 - Core Semantic Kernel plugins <span style="color: green;">✔️ Completed</span>
@@ -1257,6 +1265,10 @@ jobs:
 ## 15. Testing Strategy
 
 ### 15.1 Unit Testing
+- Use `pytest` for unit testing.
+- Create test cases for each function in the plugins and API endpoints.
+    - Test the functionality of `Journaling`,`Mindfulness`, `MoodAnalyzer` and `SafetyPlugin`.
+- Mock external dependencies (e.g., Cosmos DB, Semantic Kernel) to isolate tests.   
 
 ```python
 # filepath: tests/unit/plugins/test_mood_analyzer.py
