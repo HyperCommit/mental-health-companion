@@ -5,6 +5,8 @@ from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from backend.shared.auth import get_current_user
 from backend.shared.cosmos import check_database_connection
+import asyncio
+from backend.shared.cosmos import CosmosService
 
 # Enhanced documentation
 app = FastAPI(
@@ -93,3 +95,14 @@ app.include_router(
     tags=["Insights"], 
     dependencies=authenticated_dependency
 )
+
+def main():
+    async def run():
+        cosmos_service = CosmosService()
+        user = await cosmos_service.get_user("sample_user_id")
+        print(user)
+
+    asyncio.run(run())
+
+if __name__ == "__main__":
+    main()

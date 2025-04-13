@@ -1,9 +1,13 @@
 from semantic_kernel.functions.kernel_plugin import KernelPlugin
 from semantic_kernel.functions.kernel_function_decorator import kernel_function
+from shared.cosmos import CosmosService
 
 class SafetyPlugin(KernelPlugin):
     """Plugin for identifying potential crisis situations and providing appropriate responses"""
     
+    def __init__(self, cosmos_service: CosmosService):
+        self.cosmos_service = cosmos_service
+
     @kernel_function(description="Assesses risk level in user text")
     async def assess_risk(self, input_text: str) -> dict:
         """
@@ -38,6 +42,9 @@ class SafetyPlugin(KernelPlugin):
             "reasoning": reasoning.strip(),
             "requires_immediate_action": risk_level in ["moderate", "high"]
         }
+
+    async def log_safety_assessment(self, user_id: str, risk_level: str, reasoning: str):
+        await self.cosmos_service.log_safety_assessment(user_id, risk_level, reasoning)
 
     @kernel_function(description="Provides crisis support resources")
     async def provide_resources(self, risk_assessment: dict) -> str:

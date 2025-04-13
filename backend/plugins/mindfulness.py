@@ -3,15 +3,17 @@ from semantic_kernel.functions.kernel_function_decorator import kernel_function
 from typing import Dict, List
 import json
 from datetime import datetime
+from shared.cosmos import CosmosService
 
 class MindfulnessPlugin(KernelPlugin):
     """Plugin for mindfulness exercises and tracking"""
 
-    def __init__(self, kernel):
+    def __init__(self, kernel, cosmos_service: CosmosService):
         super().__init__()
         self._kernel = kernel
         self._time_plugin = kernel.plugins.get_plugin("time")
         self._memory = kernel.memory
+        self.cosmos_service = cosmos_service
 
         self._exercises = {
             "breathing": {
@@ -80,6 +82,12 @@ class MindfulnessPlugin(KernelPlugin):
             id=timestamp,
             metadata={"exercise_type": session_data.get("exercise_type", "unknown")}
         )
+        
+        # Save session data to CosmosService
+        user_id = session_data.get("user_id", "unknown")
+        exercise_type = session_data.get("exercise_type", "unknown")
+        duration = session_data.get("duration", 0)
+        await self.cosmos_service.save_mindfulness_session(user_id, exercise_type, duration)
         
         # Calculate statistics
         sessions = await self._memory.search(

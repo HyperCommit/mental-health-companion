@@ -1,8 +1,12 @@
 from semantic_kernel.functions.kernel_plugin import KernelPlugin
 from semantic_kernel.functions.kernel_function_decorator import kernel_function
+from shared.cosmos import CosmosService
 
 class MoodAnalyzerPlugin(KernelPlugin):
     """Plugin for analyzing mood from text and detecting patterns"""
+    
+    def __init__(self, cosmos_service: CosmosService):
+        self.cosmos_service = cosmos_service
     
     @kernel_function(description="Analyzes text to determine user's emotional state")
     async def analyze_mood(self, input_text: str) -> str:
@@ -22,6 +26,9 @@ class MoodAnalyzerPlugin(KernelPlugin):
         )
         
         return str(result).strip()
+    
+    async def analyze_and_save_mood(self, user_id: str, mood: str, context: str):
+        await self.cosmos_service.save_mood_analysis(user_id, mood, context)
     
     @kernel_function(description="Identifies emotional patterns over time")
     async def detect_patterns(self, journal_entries: list) -> str:

@@ -2,15 +2,17 @@ from semantic_kernel.functions.kernel_plugin import KernelPlugin
 from semantic_kernel.functions.kernel_function_decorator import kernel_function
 from datetime import datetime
 from typing import List, Dict
+from shared.cosmos import CosmosService
 
 class JournalingPlugin(KernelPlugin):
     """Plugin for managing and analyzing journaling entries"""
 
-    def __init__(self, kernel):
+    def __init__(self, kernel, cosmos_service: CosmosService):
         super().__init__()
         self._kernel = kernel
         self._text_plugin = kernel.plugins.get_plugin("text")
         self._memory = kernel.memory
+        self.cosmos_service = cosmos_service
 
     @kernel_function(description="Adds a new journal entry")
     async def add_entry(self, entry_text: str) -> str:
@@ -47,7 +49,11 @@ class JournalingPlugin(KernelPlugin):
         # Extract key themes
         themes = await self._text_plugin.extract_key_phrases(combined_text)
         
-        return f"Analysis complete. Overall sentiment: {sentiment}. Key themes: {themes}"
+        # Save insights to CosmosService
+        insights = f"Overall sentiment: {sentiment}. Key themes: {themes}"
+        await self.cosmos_service.save_journal_insights(time_period, insights)
+        
+        return f"Analysis complete. {insights}"
 
     @kernel_function(description="Retrieves past journal entries")
     async def get_entries(self, query: str = "") -> List[Dict]:

@@ -8,3 +8,5 @@ pydantic
 chainlit
 pytest
 pytest-asyncio
+azure-cosmos
+email-validator
