@@ -1,19 +1,32 @@
 from semantic_kernel.functions.kernel_plugin import KernelPlugin
 from semantic_kernel.functions.kernel_function_decorator import kernel_function
-from shared.cosmos import CosmosService
+from backend.shared.cosmos import CosmosService
+from typing import Dict
+from pydantic import PrivateAttr
 
 class SafetyPlugin(KernelPlugin):
     """Plugin for identifying potential crisis situations and providing appropriate responses"""
     
-    def __init__(self, cosmos_service: CosmosService):
-        self.cosmos_service = cosmos_service
+    _cosmos_service: CosmosService = PrivateAttr()
+    _kernel = PrivateAttr()
+
+    def __init__(self, cosmos_service: CosmosService, name: str = "SafetyPlugin"):
+        super().__init__(name=name)
+        self._cosmos_service = cosmos_service
+        self._kernel = None
+
+    def set_kernel(self, kernel):
+        self._kernel = kernel
 
     @kernel_function(description="Assesses risk level in user text")
-    async def assess_risk(self, input_text: str) -> dict:
+    async def assess_risk(self, input_text: str) -> Dict:
         """
         Analyze text to detect potential indicators of crisis or self-harm.
         Returns risk assessment information.
         """
+        if not self._kernel:
+            raise ValueError("Kernel not set")
+
         prompt = f"""
         Analyze the following text for signs of crisis, self-harm, or suicidal ideation.
         Provide a risk assessment (none, low, moderate, high) and explain your reasoning.
@@ -23,7 +36,7 @@ class SafetyPlugin(KernelPlugin):
         Format your response as: [RISK_LEVEL]: [REASONING]
         """
 
-        result = await self.kernel.invoke_semantic_function(
+        result = await self._kernel.invoke_semantic_function(
             prompt=prompt,
             service_id="sentiment"
         )
@@ -44,10 +57,11 @@ class SafetyPlugin(KernelPlugin):
         }
 
     async def log_safety_assessment(self, user_id: str, risk_level: str, reasoning: str):
-        await self.cosmos_service.log_safety_assessment(user_id, risk_level, reasoning)
+        """Log a safety assessment to the database."""
+        await self._cosmos_service.log_safety_assessment(user_id, risk_level, reasoning)
 
     @kernel_function(description="Provides crisis support resources")
-    async def provide_resources(self, risk_assessment: dict) -> str:
+    async def provide_resources(self, risk_assessment: Dict) -> str:
         """
         Provide appropriate resources based on the risk assessment.
         Higher risk levels receive more urgent and specific resources.
@@ -93,10 +107,10 @@ class SafetyPlugin(KernelPlugin):
     async def provide_grounding_prompts(self, risk_level: str) -> str:
         """Provide grounding prompts based on the risk level."""
         if risk_level == "high":
-            return "Name five things you can see, four things you can touch, three things you can hear, two things you can smell, and one thing you can taste."
+            return "Let's try a grounding exercise together. Name five things you can see, four things you can touch, three things you can hear, two things you can smell, and one thing you can taste."
         elif risk_level == "moderate":
-            return "Take a deep breath and describe your surroundings. What is one thing you can do to feel safer?"
+            return "Take a deep breath with me. Look around your surroundings. What is one thing you can do right now to feel safer?"
         elif risk_level == "low":
-            return "What is one small step you can take to improve your mood right now?"
+            return "What is one small step you can take right now to improve your mood?"
         else:
             return "Focus on your breathing and describe how you feel in this moment."
