@@ -14,8 +14,8 @@ class MindfulnessPlugin(KernelPlugin):
     def __init__(self, kernel, cosmos_service: CosmosService, name: str = "MindfulnessPlugin"):
         super().__init__(name=name)
         self._kernel = kernel
-        self._time_plugin = kernel.plugins["time"]
-        self._memory = kernel.memory
+        # Remove dependency on non-existent time plugin
+        self._memory = kernel.memory if hasattr(kernel, 'memory') else None
         self._cosmos_service = cosmos_service
 
         self._exercises = {
@@ -59,7 +59,7 @@ class MindfulnessPlugin(KernelPlugin):
             return f"Exercise type '{exercise_type}' not found. Available exercises: {', '.join(self._exercises.keys())}"
 
         exercise = self._exercises[exercise_type]
-        current_time = await self._time_plugin.get_current_time()
+        current_time = datetime.now().strftime("%H:%M:%S")
         
         response = [
             f"Starting {exercise_type} exercise at {current_time}",
@@ -77,14 +77,15 @@ class MindfulnessPlugin(KernelPlugin):
         """Track progress based on mindfulness session data."""
         timestamp = datetime.now().isoformat()
         
-        # Add timestamp and store in memory
+        # Add timestamp and store in memory if available
         session_data["timestamp"] = timestamp
-        await self._memory.save_information(
-            collection="mindfulness_sessions",
-            text=json.dumps(session_data),
-            id=timestamp,
-            metadata={"exercise_type": session_data.get("exercise_type", "unknown")}
-        )
+        if self._memory:
+            await self._memory.save_information(
+                collection="mindfulness_sessions",
+                text=json.dumps(session_data),
+                id=timestamp,
+                metadata={"exercise_type": session_data.get("exercise_type", "unknown")}
+            )
         
         # Save session data to CosmosService
         user_id = session_data.get("user_id", "unknown")
@@ -92,11 +93,13 @@ class MindfulnessPlugin(KernelPlugin):
         duration = session_data.get("duration", 0)
         await self._cosmos_service.save_mindfulness_session(user_id, exercise_type, duration)
         
-        # Calculate statistics
-        sessions = await self._memory.search(
-            "mindfulness_sessions", 
-            f"exercise_type:{session_data['exercise_type']}"
-        )
+        # Calculate statistics - if memory is available
+        sessions = []
+        if self._memory:
+            sessions = await self._memory.search(
+                "mindfulness_sessions", 
+                f"exercise_type:{session_data['exercise_type']}"
+            )
         
         total_duration = sum(
             json.loads(s.text).get("duration", 0) 
@@ -110,7 +113,9 @@ class MindfulnessPlugin(KernelPlugin):
     @kernel_function(description="Gets mindfulness statistics")
     async def get_statistics(self) -> Dict:
         """Retrieve mindfulness practice statistics."""
-        sessions = await self._memory.search("mindfulness_sessions", "")
+        sessions = []
+        if self._memory:
+            sessions = await self._memory.search("mindfulness_sessions", "")
         
         stats = {
             "total_sessions": len(sessions),

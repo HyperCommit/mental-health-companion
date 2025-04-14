@@ -21,7 +21,7 @@ def get_settings():
         raise ValueError("HUGGINGFACE_API_TOKEN environment variable is required")
 
     # Model configuration
-    primary_model = os.getenv("PRIMARY_MODEL", "gpt2")  # Default to gpt2 if not specified
+    primary_model = os.getenv("PRIMARY_MODEL", "t5-small")  # Changed from gpt2 to t5-small for text2text generation
     sentiment_model = os.getenv("SENTIMENT_MODEL", "distilbert-base-uncased-finetuned-sst-2-english")
     
     return {

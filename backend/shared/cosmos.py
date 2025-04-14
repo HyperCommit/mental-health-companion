@@ -174,3 +174,12 @@ class CosmosService:
         
         self.journal_container.delete_item(item=entry_id, partition_key=user_id)
         return True
+
+def check_database_connection() -> bool:
+    """Check if the Cosmos DB connection is active"""
+    try:
+        # Attempt to read database properties to verify connection
+        _ = CosmosService().database.read()
+        return True
+    except exceptions.CosmosHttpResponseError:
+        return False

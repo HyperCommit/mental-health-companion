@@ -5,6 +5,7 @@ from semantic_kernel.connectors.ai.hugging_face import HuggingFaceTextCompletion
 from huggingface_hub import snapshot_download
 from dotenv import load_dotenv
 from infrastructure.config.settings import get_settings
+from backend.shared.cosmos import CosmosService
 
 settings = get_settings()
 
@@ -36,28 +37,23 @@ class KernelService:
         
         # Get model names from settings
         conversation_model = settings["primary_model"]
-        sentiment_model = settings["sentiment_model"]
         
-        # Download models if not present locally
+        # Download model if not present locally
         conversation_path = self._download_model(conversation_model)
-        sentiment_path = self._download_model(sentiment_model)
         
-        # Add text completion services with local models
-        kernel.add_text_completion_service(
-            "conversation", 
-            HuggingFaceTextCompletion(
-                model=conversation_path,
-                device="cpu"  # Can be changed to "cuda" if GPU is available
-            )
+        # Create text completion service with a proper text-to-text model
+        conversation_service = HuggingFaceTextCompletion(
+            service_id="conversation",
+            ai_model_id=conversation_path,
+            device=-1  # Use -1 for CPU, or 0+ for specific GPU devices
         )
         
-        kernel.add_text_completion_service(
-            "sentiment",
-            HuggingFaceTextCompletion(
-                model=sentiment_path,
-                device="cpu"
-            )
-        )
+        # Add services to the kernel using dictionary assignment
+        # Since kernel.services is a dictionary in version 1.28.0
+        kernel.services["conversation"] = conversation_service
+        
+        # Create an instance of CosmosService to pass to plugins
+        cosmos_service = CosmosService()
         
         # Register plugins
         from backend.plugins.mood_analyzer import MoodAnalyzerPlugin
@@ -65,10 +61,20 @@ class KernelService:
         from backend.plugins.mindfulness import MindfulnessPlugin
         from backend.plugins.safety import SafetyPlugin
         
-        kernel.add_plugin(MoodAnalyzerPlugin(), "mood")
-        kernel.add_plugin(JournalingPlugin(), "journal")
-        kernel.add_plugin(MindfulnessPlugin(), "mindfulness")
-        kernel.add_plugin(SafetyPlugin(), "safety")
+        # Initialize plugins with the required parameters
+        mood_plugin = MoodAnalyzerPlugin(cosmos_service=cosmos_service, kernel=kernel)
+        journal_plugin = JournalingPlugin(kernel=kernel, cosmos_service=cosmos_service)
+        mindfulness_plugin = MindfulnessPlugin(kernel=kernel, cosmos_service=cosmos_service)
+        
+        # SafetyPlugin has a different initialization pattern
+        safety_plugin = SafetyPlugin(cosmos_service=cosmos_service)
+        safety_plugin.set_kernel(kernel)  # Set kernel using the separate method
+        
+        # Add initialized plugins to the kernel
+        kernel.add_plugin(mood_plugin, "mood")
+        kernel.add_plugin(journal_plugin, "journal")
+        kernel.add_plugin(mindfulness_plugin, "mindfulness")
+        kernel.add_plugin(safety_plugin, "safety")
         
         return kernel
     
