@@ -105,7 +105,7 @@ The Mental Health Companion is an AI-powered application that provides personali
 - Firebase Authentication: **Free Tier** (up to 50,000 MAU)
 - Semantic Kernel: **Free Tier** (open source)
 - Azure Cosmos DB: **Paid Tier** (no free tier available)
-- HuggingFace Models: **Free Tier** (self-hosted)
+- HuggingFace Models: **Free Tier** (remote-hosted)
 
 ## 4. Monorepo Structure
 
