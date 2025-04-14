@@ -18,6 +18,7 @@ class MoodLogInDB(MoodLogBase):
     user_id: str
     timestamp: datetime = Field(default_factory=datetime.utcnow)
     location: Optional[str] = None
+    sentiment_score: Optional[float] = None  # Add sentiment score field
     
     class Config:
         from_attributes = True

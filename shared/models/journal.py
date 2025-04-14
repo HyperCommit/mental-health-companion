@@ -23,6 +23,7 @@ class JournalEntryInDB(JournalEntryBase):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: Optional[datetime] = None
     ai_insights: Optional[Dict] = None
+    sentiment_score: Optional[float] = None
     
     class Config:
         from_attributes = True
