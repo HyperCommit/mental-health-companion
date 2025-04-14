@@ -5,10 +5,6 @@ from backend.shared.auth import get_current_user
 router = APIRouter()
 kernel_service = KernelService()
 
-@router.get("/example")
-def example_endpoint():
-    return {"message": "Insights example endpoint"}
-
 @router.get("/weekly", response_model=dict)
 async def get_weekly_insights(current_user: str = Depends(get_current_user)):
     """Retrieve weekly insights for the current user"""

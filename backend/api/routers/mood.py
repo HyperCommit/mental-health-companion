@@ -7,10 +7,6 @@ from backend.shared.kernel import KernelService
 router = APIRouter()
 kernel_service = KernelService()
 
-@router.get("/example")
-def example_endpoint():
-    return {"message": "Mood example endpoint"}
-
 @router.post("/analyze", response_model=dict)
 async def analyze_mood(
     input_text: str,

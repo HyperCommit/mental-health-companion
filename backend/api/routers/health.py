@@ -4,7 +4,7 @@ from backend.shared.cosmos import check_database_connection
 router = APIRouter()
 
 # Health check endpoint
-@router.get("/status")
+@router.get("/status", response_model=dict)
 def health_status():
     """Check the health status of the application"""
     db_status = check_database_connection()

@@ -6,9 +6,6 @@ from backend.shared.kernel import KernelService
 router = APIRouter()
 kernel_service = KernelService()
 
-@router.get("/example")
-def example_endpoint():
-    return {"message": "Mindfulness example endpoint"}
 
 @router.get("/exercise", response_model=str)
 async def guide_exercise(

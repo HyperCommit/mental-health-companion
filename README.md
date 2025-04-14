@@ -404,108 +404,252 @@ class MoodLog(MoodLogInDB):
     pass
 ```
 
-## 7. API Endpoints
+## 7. Backend API Specification
 
-### 7.1 Journal API
+ **Description**:This API provides endpoints for authentication, journaling, mood tracking, mindfulness exercises, and insights.  
+ **Version**: 0.0.1  
 
-```python
-# filepath: backend/api/routers/journal.py
-from fastapi import APIRouter, Depends, HTTPException, Query
-from typing import List, Optional
-from shared.models.journal import JournalEntry, JournalEntryCreate, JournalEntryUpdate
-from shared.models.user import User
-from backend.shared.auth import get_current_user
-from backend.shared.cosmos import CosmosService
-from backend.shared.kernel import KernelService
+### Health Check
+**GET** `/api/health`  
+- **Summary**: Health Check  
+- **Responses**:
+  - `200`: Successful Response
 
-router = APIRouter()
-cosmos_service = CosmosService()
-kernel_service = KernelService()
+---
 
-@router.get("/", response_model=List[JournalEntry])
-async def get_journal_entries(
-    skip: int = 0, 
-    limit: int = 10,
-    current_user: User = Depends(get_current_user)
-):
-    """Get all journal entries for the current user"""
-    return await cosmos_service.get_journal_entries(current_user.id, skip, limit)
+### Authentication: Endpoints related to user authentication
 
-@router.post("/", response_model=JournalEntry)
-async def create_journal_entry(
-    entry: JournalEntryCreate,
-    current_user: User = Depends(get_current_user)
-):
-    """Create a new journal entry"""
-    # Generate AI insights on the entry
-    insights = await kernel_service.analyze_journal_entry(entry.content)
-    
-    # Create entry in database
-    return await cosmos_service.create_journal_entry(
-        user_id=current_user.id,
-        content=entry.content,
-        mood_indicators=entry.mood_indicators,
-        mood_score=entry.mood_score,
-        ai_insights=insights
-    )
+#### Get Current User Profile
+**GET** `/api/auth/user`  
+- **Tags**: Authentication  
+- **Summary**: Get Current User Profile  
+- **Description**: Retrieve the current user's profile  
+- **Security**: OAuth2PasswordBearer  
+- **Responses**:
+  - `200`: Successful Response (Schema: `User`)
 
-@router.get("/{entry_id}", response_model=JournalEntry)
-async def get_journal_entry(
-    entry_id: str,
-    current_user: User = Depends(get_current_user)
-):
-    """Get a specific journal entry"""
-    entry = await cosmos_service.get_journal_entry(entry_id)
-    
-    if not entry or entry.user_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Journal entry not found")
-        
-    return entry
+#### Register User
+**POST** `/api/auth/register`  
+- **Tags**: Authentication  
+- **Summary**: Register User  
+- **Description**: Register a new user  
+- **Request Body**:
+  - **Content-Type**: `application/json`
+  - **Schema**: `UserCreate`  
+- **Responses**:
+  - `200`: Successful Response (Schema: `User`)
+  - `422`: Validation Error (Schema: `HTTPValidationError`)
 
-@router.put("/{entry_id}", response_model=JournalEntry)
-async def update_journal_entry(
-    entry_id: str,
-    entry_update: JournalEntryUpdate,
-    current_user: User = Depends(get_current_user)
-):
-    """Update a journal entry"""
-    existing_entry = await cosmos_service.get_journal_entry(entry_id)
-    
-    if not existing_entry or existing_entry.user_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Journal entry not found")
-    
-    updated_entry = await cosmos_service.update_journal_entry(
-        entry_id=entry_id,
-        user_id=current_user.id,
-        update_data=entry_update.dict(exclude_unset=True)
-    )
-    
-    return updated_entry
+#### Update User Profile
+**PUT** `/api/auth/update`  
+- **Tags**: Authentication  
+- **Summary**: Update User Profile  
+- **Description**: Update the current user's profile  
+- **Request Body**:
+  - **Content-Type**: `application/json`
+  - **Schema**: `UserUpdate`  
+- **Security**: OAuth2PasswordBearer  
+- **Responses**:
+  - `200`: Successful Response (Schema: `User`)
+  - `422`: Validation Error (Schema: `HTTPValidationError`)
 
-@router.delete("/{entry_id}")
-async def delete_journal_entry(
-    entry_id: str,
-    current_user: User = Depends(get_current_user)
-):
-    """Delete a journal entry"""
-    existing_entry = await cosmos_service.get_journal_entry(entry_id)
-    
-    if not existing_entry or existing_entry.user_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Journal entry not found")
-    
-    await cosmos_service.delete_journal_entry(entry_id, current_user.id)
-    
-    return {"message": "Entry deleted successfully"}
+#### Login For Access Token
+**POST** `/api/auth/token`  
+- **Tags**: Authentication  
+- **Summary**: Login For Access Token  
+- **Description**: Authenticate user and return a JWT token  
+- **Request Body**:
+  - **Content-Type**: `application/x-www-form-urlencoded`
+  - **Schema**: `Body_login_for_access_token_api_auth_token_post`  
+- **Responses**:
+  - `200`: Successful Response
+  - `422`: Validation Error (Schema: `HTTPValidationError`)
 
-@router.post("/prompt", response_model=dict)
-async def generate_journal_prompt(
-    mood: Optional[str] = None,
-    current_user: User = Depends(get_current_user)
-):
-    """Generate a journaling prompt based on mood"""
-    prompt = await kernel_service.generate_journal_prompt(mood)
-    return {"prompt": prompt}
-```
+---
+
+### Journal: Endpoints for journaling activities
+
+#### Get Journal Entries
+**GET** `/api/journal/`  
+- **Tags**: Journal  
+- **Summary**: Get Journal Entries  
+- **Description**: Get all journal entries for the current user  
+- **Query Parameters**:
+  - `skip` (integer, default: 0): Number of entries to skip  
+  - `limit` (integer, default: 10): Maximum number of entries to return  
+- **Security**: OAuth2PasswordBearer  
+- **Responses**:
+  - `200`: Successful Response (Schema: Array of `JournalEntry`)
+  - `422`: Validation Error (Schema: `HTTPValidationError`)
+
+#### Create Journal Entry
+**POST** `/api/journal/`  
+- **Tags**: Journal  
+- **Summary**: Create Journal Entry  
+- **Description**: Create a new journal entry  
+- **Request Body**:
+  - **Content-Type**: `application/json`
+  - **Schema**: `JournalEntryCreate`  
+- **Security**: OAuth2PasswordBearer  
+- **Responses**:
+  - `200`: Successful Response (Schema: `JournalEntry`)
+  - `422`: Validation Error (Schema: `HTTPValidationError`)
+
+#### Get Journal Entry
+**GET** `/api/journal/{entry_id}`  
+- **Tags**: Journal  
+- **Summary**: Get Journal Entry  
+- **Description**: Get a specific journal entry  
+- **Path Parameters**:
+  - `entry_id` (string): ID of the journal entry  
+- **Security**: OAuth2PasswordBearer  
+- **Responses**:
+  - `200`: Successful Response (Schema: `JournalEntry`)
+  - `422`: Validation Error (Schema: `HTTPValidationError`)
+
+#### Update Journal Entry
+**PUT** `/api/journal/{entry_id}`  
+- **Tags**: Journal  
+- **Summary**: Update Journal Entry  
+- **Description**: Update a journal entry  
+- **Path Parameters**:
+  - `entry_id` (string): ID of the journal entry  
+- **Request Body**:
+  - **Content-Type**: `application/json`
+  - **Schema**: `JournalEntryUpdate`  
+- **Security**: OAuth2PasswordBearer  
+- **Responses**:
+  - `200`: Successful Response (Schema: `JournalEntry`)
+  - `422`: Validation Error (Schema: `HTTPValidationError`)
+
+#### Delete Journal Entry
+**DELETE** `/api/journal/{entry_id}`  
+- **Tags**: Journal  
+- **Summary**: Delete Journal Entry  
+- **Description**: Delete a journal entry  
+- **Path Parameters**:
+  - `entry_id` (string): ID of the journal entry  
+- **Security**: OAuth2PasswordBearer  
+- **Responses**:
+  - `200`: Successful Response
+  - `422`: Validation Error (Schema: `HTTPValidationError`)
+
+#### Generate Journal Prompt
+**POST** `/api/journal/prompt`  
+- **Tags**: Journal  
+- **Summary**: Generate Journal Prompt  
+- **Description**: Generate a journaling prompt based on mood  
+- **Query Parameters**:
+  - `mood` (string, optional): Mood to base the prompt on  
+- **Security**: OAuth2PasswordBearer  
+- **Responses**:
+  - `200`: Successful Response (Schema: Object)
+  - `422`: Validation Error (Schema: `HTTPValidationError`)
+
+---
+
+### Mood: Endpoints for mood tracking
+
+#### Analyze Mood
+**POST** `/api/mood/analyze`  
+- **Tags**: Mood  
+- **Summary**: Analyze Mood  
+- **Description**: Analyze mood from text  
+- **Query Parameters**:
+  - `input_text` (string, required): Text to analyze  
+- **Security**: OAuth2PasswordBearer  
+- **Responses**:
+  - `200`: Successful Response (Schema: Object)
+  - `422`: Validation Error (Schema: `HTTPValidationError`)
+
+#### Log Mood
+**POST** `/api/mood/log`  
+- **Tags**: Mood  
+- **Summary**: Log Mood  
+- **Description**: Log a mood entry  
+- **Request Body**:
+  - **Content-Type**: `application/json`
+  - **Schema**: `MoodLogCreate`  
+- **Security**: OAuth2PasswordBearer  
+- **Responses**:
+  - `200`: Successful Response (Schema: `MoodLog`)
+  - `422`: Validation Error (Schema: `HTTPValidationError`)
+
+#### Detect Patterns
+**GET** `/api/mood/patterns`  
+- **Tags**: Mood  
+- **Summary**: Detect Patterns  
+- **Description**: Detect emotional patterns from journal entries  
+- **Request Body**:
+  - **Content-Type**: `application/json`
+  - **Schema**: Array of strings  
+- **Security**: OAuth2PasswordBearer  
+- **Responses**:
+  - `200`: Successful Response (Schema: String)
+  - `422`: Validation Error (Schema: `HTTPValidationError`)
+
+---
+
+### Mindfulness: Endpoints for mindfulness exercises
+
+#### Guide Exercise
+**GET** `/api/mindfulness/exercise`  
+- **Tags**: Mindfulness  
+- **Summary**: Guide Exercise  
+- **Description**: Guide a mindfulness exercise  
+- **Query Parameters**:
+  - `exercise_type` (string, required): Type of exercise  
+- **Security**: OAuth2PasswordBearer  
+- **Responses**:
+  - `200`: Successful Response (Schema: String)
+  - `422`: Validation Error (Schema: `HTTPValidationError`)
+
+#### Track Progress
+**POST** `/api/mindfulness/track`  
+- **Tags**: Mindfulness  
+- **Summary**: Track Progress  
+- **Description**: Track mindfulness progress  
+- **Request Body**:
+  - **Content-Type**: `application/json`
+  - **Schema**: Object  
+- **Security**: OAuth2PasswordBearer  
+- **Responses**:
+  - `200`: Successful Response (Schema: String)
+  - `422`: Validation Error (Schema: `HTTPValidationError`)
+
+#### Get Statistics
+**GET** `/api/mindfulness/statistics`  
+- **Tags**: Mindfulness  
+- **Summary**: Get Statistics  
+- **Description**: Get mindfulness statistics  
+- **Security**: OAuth2PasswordBearer  
+- **Responses**:
+  - `200`: Successful Response (Schema: Object)
+
+---
+
+### Insights: Endpoints for generating insights
+
+#### Get Weekly Insights
+**GET** `/api/insights/weekly`  
+- **Tags**: Insights  
+- **Summary**: Get Weekly Insights  
+- **Description**: Retrieve weekly insights for the current user  
+- **Security**: OAuth2PasswordBearer  
+- **Responses**:
+  - `200`: Successful Response (Schema: Object)
+
+#### Get Emotional Patterns
+**GET** `/api/insights/patterns`  
+- **Tags**: Insights  
+- **Summary**: Get Emotional Patterns  
+- **Description**: Retrieve emotional patterns for the current user  
+- **Security**: OAuth2PasswordBearer  
+- **Responses**:
+  - `200`: Successful Response (Schema: Object)
+
+---
+
 
 ## 8. Plugin Implementations
 
