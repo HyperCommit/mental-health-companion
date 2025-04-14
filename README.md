@@ -94,7 +94,7 @@ The Mental Health Companion is an AI-powered application that provides personali
           │                             │                             │
           ▼                             ▼                             ▼
 ┌─────────────────────┐     ┌─────────────────────────┐     ┌─────────────────┐
-│  Authentication     │────▶│  Azure Cosmos DB        │◀────│  Local Models   │
+│  Authentication     │────▶│  Azure Cosmos DB        │◀────│  Remote Models   │
 │  (Firebase Auth)    │     │  (Document & Vector DB) │     │  (HuggingFace)  │
 └─────────────────────┘     └─────────────────────────┘     └─────────────────┘
 ```

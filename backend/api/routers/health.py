@@ -1,7 +1,14 @@
 from fastapi import APIRouter
+from backend.shared.cosmos import check_database_connection
 
 router = APIRouter()
 
-@router.get("/example")
-def example_endpoint():
-    return {"message": "Health example endpoint"}
+# Health check endpoint
+@router.get("/status")
+def health_status():
+    """Check the health status of the application"""
+    db_status = check_database_connection()
+    return {
+        "status": "healthy",
+        "database": "connected" if db_status else "disconnected"
+    }
