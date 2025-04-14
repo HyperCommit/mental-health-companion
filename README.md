@@ -8,7 +8,7 @@ AI-powered mental health companion app using Semantic Kernel, FastAPI, and Chain
 - [4. Monorepo Structure](#4-monorepo-structure)
 - [5. Component Specifications](#5-component-specifications)
 - [6. Data Models](#6-data-models)
-- [7. API Endpoints](#7-api-endpoints)
+- [7. Backend API Specification](#7-backend-api-specification)
 - [8. Plugin Implementations](#8-plugin-implementations)
 - [9. Chainlit Implementation](#9-chainlit-implementation)
 - [10. Authentication and Security](#10-authentication-and-security)
