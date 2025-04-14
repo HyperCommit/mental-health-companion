@@ -1,6 +1,8 @@
 import os
+from pathlib import Path
 import semantic_kernel as sk
 from semantic_kernel.connectors.ai.hugging_face import HuggingFaceTextCompletion
+from huggingface_hub import snapshot_download
 from dotenv import load_dotenv
 from infrastructure.config.settings import get_settings
 
@@ -12,6 +14,19 @@ class KernelService:
     def __init__(self):
         self.kernel = self._initialize_kernel()
     
+    def _download_model(self, model_name: str) -> str:
+        """Download model from HuggingFace Hub if not present locally"""
+        cache_dir = Path.home() / ".cache" / "huggingface" / "hub"
+        model_path = cache_dir / model_name
+        
+        if not model_path.exists():
+            model_path = snapshot_download(
+                repo_id=model_name,
+                cache_dir=str(cache_dir)
+            )
+            
+        return str(model_path)
+    
     def _initialize_kernel(self):
         """Initialize and configure Semantic Kernel with local models"""
         load_dotenv()
@@ -19,19 +34,29 @@ class KernelService:
         # Create kernel instance
         kernel = sk.Kernel()
         
-        # Configure AI services
-        conversation_model = settings.primary_model
-        sentiment_model = settings.sentiment_model
+        # Get model names from settings
+        conversation_model = settings["primary_model"]
+        sentiment_model = settings["sentiment_model"]
         
-        # Add text completion services
+        # Download models if not present locally
+        conversation_path = self._download_model(conversation_model)
+        sentiment_path = self._download_model(sentiment_model)
+        
+        # Add text completion services with local models
         kernel.add_text_completion_service(
             "conversation", 
-            HuggingFaceTextCompletion(conversation_model)
+            HuggingFaceTextCompletion(
+                model=conversation_path,
+                device="cpu"  # Can be changed to "cuda" if GPU is available
+            )
         )
         
         kernel.add_text_completion_service(
             "sentiment",
-            HuggingFaceTextCompletion(sentiment_model)
+            HuggingFaceTextCompletion(
+                model=sentiment_path,
+                device="cpu"
+            )
         )
         
         # Register plugins
