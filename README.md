@@ -36,17 +36,17 @@ The Mental Health Companion is an AI-powered application that provides personali
 - **Backend Framework**: FastAPI (Free Tier)
 - **AI Framework**: Semantic Kernel (Free Tier)
 - **Database**: Azure Cosmos DB (Paid Tier)
-- **Authentication**: Firebase Auth (Free Tier)
+- **Authentication**: Azure AD B2C Auth (Free Tier)
 - **AI Models**: HuggingFace (Free Tier for self-hosted)
 
 ## 2. User Flows
 
 ### 2.1 Onboarding Flow
 ```
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│ Landing Page│────▶│  Sign Up    │────▶│ Initial Mood│────▶│  Dashboard  │
-│             │     │(Firebase Auth)    │ Assessment  │     │             │
-└─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘
+┌─────────────┐     ┌───────────────┐     ┌────────────────┐     ┌─────────────┐
+│ Landing Page│────▶│    Sign Up    │────▶│ Initial Mood   │────▶│  Dashboard  │
+│             │     │(Azure AD B2C) │     │  Assessment    │     │             │
+└─────────────┘     └───────────────┘     └────────────────┘     └─────────────┘
 ```
 
 ### 2.2 Daily Check-in Flow
@@ -95,14 +95,14 @@ The Mental Health Companion is an AI-powered application that provides personali
           ▼                             ▼                             ▼
 ┌─────────────────────┐     ┌─────────────────────────┐     ┌─────────────────┐
 │  Authentication     │────▶│  Azure Cosmos DB        │◀────│  Remote Models   │
-│  (Firebase Auth)    │     │  (Document & Vector DB) │     │  (HuggingFace)  │
+│ (Azure AD B2C Auth) │     │  (Document & Vector DB) │     │  (HuggingFace)  │
 └─────────────────────┘     └─────────────────────────┘     └─────────────────┘
 ```
 
 **Service Tier Labels:**
 - Chainlit Web UI: **Free Tier**
 - FastAPI Backend: **Free Tier**
-- Firebase Authentication: **Free Tier** (up to 50,000 MAU)
+- Azure AD B2C Authentication: **Free Tier** (up to 50,000 MAU)
 - Semantic Kernel: **Free Tier** (open source)
 - Azure Cosmos DB: **Paid Tier** (no free tier available)
 - HuggingFace Models: **Free Tier** (remote-hosted)
@@ -801,7 +801,7 @@ class SafetyPlugin(KernelPlugin):
 # filepath: frontend/chainlit/app.py
 import chainlit as cl
 from backend.shared.kernel import KernelService
-from backend.shared.auth import verify_firebase_token
+from backend.shared.auth import verify_azure_ad_b2c_token
 from infrastructure.config.settings import get_settings
 
 settings = get_settings()
@@ -984,9 +984,9 @@ async def on_form_submit(form):
 
 @cl.auth_callback
 async def auth_callback(auth_info):
-    """Authenticate the user with Firebase"""
-    # Verify Firebase token
-    user_id = verify_firebase_token(auth_info.get("token"))
+    """Authenticate the user with azure_ad_b2c"""
+    # Verify azure_ad_b2c token
+    user_id = verify_azure_ad_b2c_token(auth_info.get("token"))
     if not user_id:
         return None
         
@@ -998,13 +998,13 @@ async def auth_callback(auth_info):
 
 ## 10. Authentication and Security
 
-### 10.1 Firebase Authentication (Free Tier)
+### 10.1 azure_ad_b2c Authentication (Free Tier)
 
 ```python
 # filepath: backend/shared/auth.py
 import os
-import firebase_admin
-from firebase_admin import auth, credentials
+import azure_ad_b2c_admin
+from azure_ad_b2c_admin import auth, credentials
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Optional
@@ -1015,17 +1015,17 @@ from infrastructure.config.settings import get_settings
 
 settings = get_settings()
 
-# Initialize Firebase
-cred_path = settings.firebase_credentials_path
+# Initialize azure_ad_b2c
+cred_path = settings.azure_ad_b2c_credentials_path
 cred = credentials.Certificate(cred_path)
-firebase_admin.initialize_app(cred)
+azure_ad_b2c_admin.initialize_app(cred)
 
 # Security scheme
 security = HTTPBearer()
 cosmos_service = CosmosService()
 
-async def verify_firebase_token(token: str) -> Optional[str]:
-    """Verify Firebase token and return user ID if valid"""
+async def verify_azure_ad_b2c_token(token: str) -> Optional[str]:
+    """Verify azure_ad_b2c token and return user ID if valid"""
     try:
         decoded_token = auth.verify_id_token(token)
         return decoded_token.get("uid")
@@ -1380,7 +1380,7 @@ jobs:
         - Plugin Integration Tests
         - API Integration Tests
 - Core API Development 
-- Firebase Authentication integration
+- Azure AD B2C Authentication integration
 - Basic Chainlit conversational interface
 - Core Semantic Kernel plugins <span style="color: green;">✔️ Completed</span>
 - Initial Cosmos DB implementation <span style="color: green;">✔️ Completed</span>
@@ -1579,7 +1579,7 @@ The project uses GitHub Actions for CI/CD to automate testing, building, and dep
 2. Push the backend and frontend container images to the Azure Container Registry.
 3. Deploy the backend to Azure Container Instances:
    - Use `az container create` to deploy the backend container.
-   - Configure environment variables such as `COSMOS_CONNECTION_STRING`, `FIREBASE_CONFIG`, `PRIMARY_MODEL`, and `SENTIMENT_MODEL`.
+   - Configure environment variables such as `COSMOS_CONNECTION_STRING`, `Azure_AD_B2C_CONFIG`, `PRIMARY_MODEL`, and `SENTIMENT_MODEL`.
 4. Deploy the frontend to Azure Container Instances:
    - Use `az container create` to deploy the frontend container.
    - Expose the application on port 8501.
