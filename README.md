@@ -408,6 +408,7 @@ class MoodLog(MoodLogInDB):
 
  **Description**:This API provides endpoints for authentication, journaling, mood tracking, mindfulness exercises, and insights.  
  **Version**: 0.0.1  
+ **Start API Server**: `uvicorn backend.api.main:app --reload`
 
 ### Health Check
 **GET** `/api/health`  

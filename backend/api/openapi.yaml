@@ -326,39 +326,103 @@ paths:
         '400': &id001
           content:
             application/json:
+              example:
+                correlation_id: 550e8400-e29b-41d4-a716-446655440000
+                message: Invalid request parameters
+                timestamp: '2025-04-18T12:34:56.789Z'
               schema:
                 properties:
-                  detail:
+                  correlation_id:
+                    type: string
+                  message:
+                    type: string
+                  timestamp:
+                    format: date-time
                     type: string
                 type: object
-          description: Bad Request
+          description: Bad Request - The request is malformed or contains invalid
+            parameters
         '401': &id002
           content:
             application/json:
+              example:
+                auth_required: true
+                correlation_id: 550e8400-e29b-41d4-a716-446655440000
+                message: Not authenticated
+                timestamp: '2025-04-18T12:34:56.789Z'
               schema:
                 properties:
-                  detail:
+                  auth_required:
+                    type: boolean
+                  correlation_id:
+                    type: string
+                  message:
+                    type: string
+                  timestamp:
+                    format: date-time
                     type: string
                 type: object
-          description: Unauthorized
-        '404': &id004
+          description: Unauthorized - Authentication is required or has failed
+        '403': &id003
           content:
             application/json:
+              example:
+                correlation_id: 550e8400-e29b-41d4-a716-446655440000
+                message: You don't have permission to access this resource
+                permission_required: true
+                timestamp: '2025-04-18T12:34:56.789Z'
               schema:
                 properties:
-                  detail:
+                  correlation_id:
+                    type: string
+                  message:
+                    type: string
+                  permission_required:
+                    type: boolean
+                  timestamp:
+                    format: date-time
                     type: string
                 type: object
-          description: Not Found
-        '500': &id003
+          description: Forbidden - You don't have permission to access this resource
+        '404': &id006
           content:
             application/json:
+              example:
+                correlation_id: 550e8400-e29b-41d4-a716-446655440000
+                message: Resource not found
+                resource: /api/journal/12345
+                timestamp: '2025-04-18T12:34:56.789Z'
               schema:
                 properties:
-                  detail:
+                  correlation_id:
+                    type: string
+                  message:
+                    type: string
+                  resource:
+                    type: string
+                  timestamp:
+                    format: date-time
                     type: string
                 type: object
-          description: Internal Server Error
+          description: Not Found - The requested resource does not exist
+        '500': &id004
+          content:
+            application/json:
+              example:
+                correlation_id: 550e8400-e29b-41d4-a716-446655440000
+                message: An unexpected error occurred.
+                timestamp: '2025-04-18T12:34:56.789Z'
+              schema:
+                properties:
+                  correlation_id:
+                    type: string
+                  message:
+                    type: string
+                  timestamp:
+                    format: date-time
+                    type: string
+                type: object
+          description: Internal Server Error - An unexpected error occurred
       security:
       - OAuth2PasswordBearer: []
       summary: Get Current User Profile
@@ -383,13 +447,41 @@ paths:
           description: Successful Response
         '400': *id001
         '401': *id002
-        '422':
+        '403': *id003
+        '422': &id005
           content:
             application/json:
+              example:
+                correlation_id: 550e8400-e29b-41d4-a716-446655440000
+                details:
+                - field: email
+                  msg: value is not a valid email address
+                  type: value_error.email
+                message: Validation error
+                timestamp: '2025-04-18T12:34:56.789Z'
               schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-        '500': *id003
+                properties:
+                  correlation_id:
+                    type: string
+                  details:
+                    items:
+                      properties:
+                        field:
+                          type: string
+                        msg:
+                          type: string
+                        type:
+                          type: string
+                      type: object
+                    type: array
+                  message:
+                    type: string
+                  timestamp:
+                    format: date-time
+                    type: string
+                type: object
+          description: Unprocessable Entity - Validation error
+        '500': *id004
       summary: Register User
       tags:
       - Authentication
@@ -411,13 +503,9 @@ paths:
           description: Successful Response
         '400': *id001
         '401': *id002
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-        '500': *id003
+        '403': *id003
+        '422': *id005
+        '500': *id004
       summary: Login For Access Token
       tags:
       - Authentication
@@ -440,14 +528,10 @@ paths:
           description: Successful Response
         '400': *id001
         '401': *id002
-        '404': *id004
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-        '500': *id003
+        '403': *id003
+        '404': *id006
+        '422': *id005
+        '500': *id004
       security:
       - OAuth2PasswordBearer: []
       summary: Update User Profile
@@ -462,9 +546,6 @@ paths:
             application/json:
               schema: {}
           description: Successful Response
-        '400': *id001
-        '401': *id002
-        '500': *id003
       summary: Health Check
   /api/insights/patterns:
     get:
@@ -481,7 +562,8 @@ paths:
           description: Successful Response
         '400': *id001
         '401': *id002
-        '500': *id003
+        '403': *id003
+        '500': *id004
       security:
       - OAuth2PasswordBearer: []
       summary: Get Emotional Patterns
@@ -502,7 +584,8 @@ paths:
           description: Successful Response
         '400': *id001
         '401': *id002
-        '500': *id003
+        '403': *id003
+        '500': *id004
       security:
       - OAuth2PasswordBearer: []
       summary: Get Weekly Insights
@@ -539,13 +622,14 @@ paths:
           description: Successful Response
         '400': *id001
         '401': *id002
+        '403': *id003
         '422':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
           description: Validation Error
-        '500': *id003
+        '500': *id004
       security:
       - OAuth2PasswordBearer: []
       summary: Get Journal Entries
@@ -569,13 +653,9 @@ paths:
           description: Successful Response
         '400': *id001
         '401': *id002
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-        '500': *id003
+        '403': *id003
+        '422': *id005
+        '500': *id004
       security:
       - OAuth2PasswordBearer: []
       summary: Create Journal Entry
@@ -605,13 +685,9 @@ paths:
           description: Successful Response
         '400': *id001
         '401': *id002
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-        '500': *id003
+        '403': *id003
+        '422': *id005
+        '500': *id004
       security:
       - OAuth2PasswordBearer: []
       summary: Generate Journal Prompt
@@ -636,14 +712,15 @@ paths:
           description: Successful Response
         '400': *id001
         '401': *id002
-        '404': *id004
+        '403': *id003
+        '404': *id006
         '422':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
           description: Validation Error
-        '500': *id003
+        '500': *id004
       security:
       - OAuth2PasswordBearer: []
       summary: Delete Journal Entry
@@ -668,14 +745,15 @@ paths:
           description: Successful Response
         '400': *id001
         '401': *id002
-        '404': *id004
+        '403': *id003
+        '404': *id006
         '422':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
           description: Validation Error
-        '500': *id003
+        '500': *id004
       security:
       - OAuth2PasswordBearer: []
       summary: Get Journal Entry
@@ -706,14 +784,10 @@ paths:
           description: Successful Response
         '400': *id001
         '401': *id002
-        '404': *id004
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-        '500': *id003
+        '403': *id003
+        '404': *id006
+        '422': *id005
+        '500': *id004
       security:
       - OAuth2PasswordBearer: []
       summary: Update Journal Entry
@@ -740,13 +814,14 @@ paths:
           description: Successful Response
         '400': *id001
         '401': *id002
+        '403': *id003
         '422':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
           description: Validation Error
-        '500': *id003
+        '500': *id004
       security:
       - OAuth2PasswordBearer: []
       summary: Guide Exercise
@@ -767,7 +842,8 @@ paths:
           description: Successful Response
         '400': *id001
         '401': *id002
-        '500': *id003
+        '403': *id003
+        '500': *id004
       security:
       - OAuth2PasswordBearer: []
       summary: Get Statistics
@@ -795,13 +871,9 @@ paths:
           description: Successful Response
         '400': *id001
         '401': *id002
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-        '500': *id003
+        '403': *id003
+        '422': *id005
+        '500': *id004
       security:
       - OAuth2PasswordBearer: []
       summary: Track Progress
@@ -829,13 +901,9 @@ paths:
           description: Successful Response
         '400': *id001
         '401': *id002
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-        '500': *id003
+        '403': *id003
+        '422': *id005
+        '500': *id004
       security:
       - OAuth2PasswordBearer: []
       summary: Analyze Mood
@@ -860,13 +928,9 @@ paths:
           description: Successful Response
         '400': *id001
         '401': *id002
-        '422':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HTTPValidationError'
-          description: Validation Error
-        '500': *id003
+        '403': *id003
+        '422': *id005
+        '500': *id004
       security:
       - OAuth2PasswordBearer: []
       summary: Log Mood
@@ -895,13 +959,14 @@ paths:
           description: Successful Response
         '400': *id001
         '401': *id002
+        '403': *id003
         '422':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
           description: Validation Error
-        '500': *id003
+        '500': *id004
       security:
       - OAuth2PasswordBearer: []
       summary: Detect Patterns
