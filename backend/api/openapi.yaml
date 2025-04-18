@@ -1,0 +1,909 @@
+components:
+  schemas:
+    Body_login_for_access_token_api_auth_user_user_token_post:
+      properties:
+        client_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Client Id
+        client_secret:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Client Secret
+        grant_type:
+          anyOf:
+          - pattern: ^password$
+            type: string
+          - type: 'null'
+          title: Grant Type
+        password:
+          title: Password
+          type: string
+        scope:
+          default: ''
+          title: Scope
+          type: string
+        username:
+          title: Username
+          type: string
+      required:
+      - username
+      - password
+      title: Body_login_for_access_token_api_auth_user_user_token_post
+      type: object
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          title: Detail
+          type: array
+      title: HTTPValidationError
+      type: object
+    JournalEntry:
+      properties:
+        ai_insights:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Ai Insights
+        content:
+          minLength: 1
+          title: Content
+          type: string
+        created_at:
+          format: date-time
+          title: Created At
+          type: string
+        id:
+          title: Id
+          type: string
+        mood_indicators:
+          items:
+            type: string
+          title: Mood Indicators
+          type: array
+        mood_score:
+          anyOf:
+          - maximum: 10.0
+            minimum: 1.0
+            type: integer
+          - type: 'null'
+          title: Mood Score
+        sentiment_score:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Sentiment Score
+        updated_at:
+          anyOf:
+          - format: date-time
+            type: string
+          - type: 'null'
+          title: Updated At
+        user_id:
+          title: User Id
+          type: string
+      required:
+      - content
+      - user_id
+      title: JournalEntry
+      type: object
+    JournalEntryCreate:
+      properties:
+        content:
+          minLength: 1
+          title: Content
+          type: string
+        mood_indicators:
+          items:
+            type: string
+          title: Mood Indicators
+          type: array
+        mood_score:
+          anyOf:
+          - maximum: 10.0
+            minimum: 1.0
+            type: integer
+          - type: 'null'
+          title: Mood Score
+      required:
+      - content
+      title: JournalEntryCreate
+      type: object
+    JournalEntryUpdate:
+      properties:
+        content:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Content
+        mood_indicators:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Mood Indicators
+        mood_score:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Mood Score
+      title: JournalEntryUpdate
+      type: object
+    MoodLog:
+      properties:
+        context:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Context
+        factors:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Factors
+        id:
+          title: Id
+          type: string
+        location:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Location
+        mood_labels:
+          items:
+            type: string
+          title: Mood Labels
+          type: array
+        mood_score:
+          maximum: 10.0
+          minimum: 1.0
+          title: Mood Score
+          type: integer
+        sentiment_score:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Sentiment Score
+        timestamp:
+          format: date-time
+          title: Timestamp
+          type: string
+        user_id:
+          title: User Id
+          type: string
+      required:
+      - mood_score
+      - user_id
+      title: MoodLog
+      type: object
+    MoodLogCreate:
+      properties:
+        context:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Context
+        factors:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          title: Factors
+        mood_labels:
+          items:
+            type: string
+          title: Mood Labels
+          type: array
+        mood_score:
+          maximum: 10.0
+          minimum: 1.0
+          title: Mood Score
+          type: integer
+      required:
+      - mood_score
+      title: MoodLogCreate
+      type: object
+    User:
+      properties:
+        created_at:
+          format: date-time
+          title: Created At
+          type: string
+        email:
+          format: email
+          title: Email
+          type: string
+        id:
+          title: Id
+          type: string
+        preferences:
+          additionalProperties: true
+          title: Preferences
+          type: object
+        profile:
+          additionalProperties: true
+          title: Profile
+          type: object
+        subscription_tier:
+          default: free
+          title: Subscription Tier
+          type: string
+      required:
+      - email
+      - id
+      - created_at
+      title: User
+      type: object
+    UserCreate:
+      properties:
+        email:
+          format: email
+          title: Email
+          type: string
+      required:
+      - email
+      title: UserCreate
+      type: object
+    UserUpdate:
+      properties:
+        email:
+          anyOf:
+          - format: email
+            type: string
+          - type: 'null'
+          title: Email
+        preferences:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Preferences
+        profile:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Profile
+        subscription_tier:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Subscription Tier
+      title: UserUpdate
+      type: object
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          title: Location
+          type: array
+        msg:
+          title: Message
+          type: string
+        type:
+          title: Error Type
+          type: string
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+      type: object
+  securitySchemes:
+    bearerAuth:
+      bearerFormat: JWT
+      scheme: bearer
+      type: http
+info:
+  description: API for mental health tracking and mindfulness exercises
+  title: Mental Health Companion API
+  version: 1.0.0
+openapi: 3.1.0
+paths:
+  /api/auth/user/user:
+    get:
+      description: Retrieve the current user's profile
+      operationId: get_current_user_profile_api_auth_user_user_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: Successful Response
+        '400': &id001
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Bad Request
+        '401': &id002
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Unauthorized
+        '404': &id004
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Not Found
+        '500': &id003
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                type: object
+          description: Internal Server Error
+      security:
+      - OAuth2PasswordBearer: []
+      summary: Get Current User Profile
+      tags:
+      - Authentication
+  /api/auth/user/user/register:
+    post:
+      description: Register a new user
+      operationId: register_user_api_auth_user_user_register_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreate'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: Successful Response
+        '400': *id001
+        '401': *id002
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+        '500': *id003
+      summary: Register User
+      tags:
+      - Authentication
+  /api/auth/user/user/token:
+    post:
+      description: Authenticate user and return a JWT token
+      operationId: login_for_access_token_api_auth_user_user_token_post
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Body_login_for_access_token_api_auth_user_user_token_post'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '400': *id001
+        '401': *id002
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+        '500': *id003
+      summary: Login For Access Token
+      tags:
+      - Authentication
+  /api/auth/user/user/update:
+    put:
+      description: Update the current user's profile
+      operationId: update_user_profile_api_auth_user_user_update_put
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdate'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: Successful Response
+        '400': *id001
+        '401': *id002
+        '404': *id004
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+        '500': *id003
+      security:
+      - OAuth2PasswordBearer: []
+      summary: Update User Profile
+      tags:
+      - Authentication
+  /api/health:
+    get:
+      operationId: health_check_api_health_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '400': *id001
+        '401': *id002
+        '500': *id003
+      summary: Health Check
+  /api/insights/patterns:
+    get:
+      description: Retrieve emotional patterns for the current user
+      operationId: get_emotional_patterns_api_insights_patterns_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                title: Response Get Emotional Patterns Api Insights Patterns Get
+                type: object
+          description: Successful Response
+        '400': *id001
+        '401': *id002
+        '500': *id003
+      security:
+      - OAuth2PasswordBearer: []
+      summary: Get Emotional Patterns
+      tags:
+      - Insights
+  /api/insights/weekly:
+    get:
+      description: Retrieve weekly insights for the current user
+      operationId: get_weekly_insights_api_insights_weekly_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                title: Response Get Weekly Insights Api Insights Weekly Get
+                type: object
+          description: Successful Response
+        '400': *id001
+        '401': *id002
+        '500': *id003
+      security:
+      - OAuth2PasswordBearer: []
+      summary: Get Weekly Insights
+      tags:
+      - Insights
+  /api/journal/:
+    get:
+      description: Get all journal entries for the current user
+      operationId: get_journal_entries_api_journal__get
+      parameters:
+      - in: query
+        name: skip
+        required: false
+        schema:
+          default: 0
+          title: Skip
+          type: integer
+      - in: query
+        name: limit
+        required: false
+        schema:
+          default: 10
+          title: Limit
+          type: integer
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/JournalEntry'
+                title: Response Get Journal Entries Api Journal  Get
+                type: array
+          description: Successful Response
+        '400': *id001
+        '401': *id002
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+        '500': *id003
+      security:
+      - OAuth2PasswordBearer: []
+      summary: Get Journal Entries
+      tags:
+      - Journal
+    post:
+      description: Create a new journal entry
+      operationId: create_journal_entry_api_journal__post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JournalEntryCreate'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JournalEntry'
+          description: Successful Response
+        '400': *id001
+        '401': *id002
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+        '500': *id003
+      security:
+      - OAuth2PasswordBearer: []
+      summary: Create Journal Entry
+      tags:
+      - Journal
+  /api/journal/prompt:
+    post:
+      description: Generate a journaling prompt based on mood
+      operationId: generate_journal_prompt_api_journal_prompt_post
+      parameters:
+      - in: query
+        name: mood
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Mood
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                title: Response Generate Journal Prompt Api Journal Prompt Post
+                type: object
+          description: Successful Response
+        '400': *id001
+        '401': *id002
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+        '500': *id003
+      security:
+      - OAuth2PasswordBearer: []
+      summary: Generate Journal Prompt
+      tags:
+      - Journal
+  /api/journal/{entry_id}:
+    delete:
+      description: Delete a journal entry
+      operationId: delete_journal_entry_api_journal__entry_id__delete
+      parameters:
+      - in: path
+        name: entry_id
+        required: true
+        schema:
+          title: Entry Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        '400': *id001
+        '401': *id002
+        '404': *id004
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+        '500': *id003
+      security:
+      - OAuth2PasswordBearer: []
+      summary: Delete Journal Entry
+      tags:
+      - Journal
+    get:
+      description: Get a specific journal entry
+      operationId: get_journal_entry_api_journal__entry_id__get
+      parameters:
+      - in: path
+        name: entry_id
+        required: true
+        schema:
+          title: Entry Id
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JournalEntry'
+          description: Successful Response
+        '400': *id001
+        '401': *id002
+        '404': *id004
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+        '500': *id003
+      security:
+      - OAuth2PasswordBearer: []
+      summary: Get Journal Entry
+      tags:
+      - Journal
+    put:
+      description: Update a journal entry
+      operationId: update_journal_entry_api_journal__entry_id__put
+      parameters:
+      - in: path
+        name: entry_id
+        required: true
+        schema:
+          title: Entry Id
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JournalEntryUpdate'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JournalEntry'
+          description: Successful Response
+        '400': *id001
+        '401': *id002
+        '404': *id004
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+        '500': *id003
+      security:
+      - OAuth2PasswordBearer: []
+      summary: Update Journal Entry
+      tags:
+      - Journal
+  /api/mindfulness/exercise:
+    get:
+      description: Guide a mindfulness exercise
+      operationId: guide_exercise_api_mindfulness_exercise_get
+      parameters:
+      - in: query
+        name: exercise_type
+        required: true
+        schema:
+          title: Exercise Type
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                title: Response Guide Exercise Api Mindfulness Exercise Get
+                type: string
+          description: Successful Response
+        '400': *id001
+        '401': *id002
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+        '500': *id003
+      security:
+      - OAuth2PasswordBearer: []
+      summary: Guide Exercise
+      tags:
+      - Mindfulness
+  /api/mindfulness/statistics:
+    get:
+      description: Get mindfulness statistics
+      operationId: get_statistics_api_mindfulness_statistics_get
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                title: Response Get Statistics Api Mindfulness Statistics Get
+                type: object
+          description: Successful Response
+        '400': *id001
+        '401': *id002
+        '500': *id003
+      security:
+      - OAuth2PasswordBearer: []
+      summary: Get Statistics
+      tags:
+      - Mindfulness
+  /api/mindfulness/track:
+    post:
+      description: Track mindfulness progress
+      operationId: track_progress_api_mindfulness_track_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              additionalProperties: true
+              title: Session Data
+              type: object
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                title: Response Track Progress Api Mindfulness Track Post
+                type: string
+          description: Successful Response
+        '400': *id001
+        '401': *id002
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+        '500': *id003
+      security:
+      - OAuth2PasswordBearer: []
+      summary: Track Progress
+      tags:
+      - Mindfulness
+  /api/mood/analyze:
+    post:
+      description: Analyze mood from text
+      operationId: analyze_mood_api_mood_analyze_post
+      parameters:
+      - in: query
+        name: input_text
+        required: true
+        schema:
+          title: Input Text
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                title: Response Analyze Mood Api Mood Analyze Post
+                type: object
+          description: Successful Response
+        '400': *id001
+        '401': *id002
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+        '500': *id003
+      security:
+      - OAuth2PasswordBearer: []
+      summary: Analyze Mood
+      tags:
+      - Mood
+  /api/mood/log:
+    post:
+      description: Log a mood entry
+      operationId: log_mood_api_mood_log_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MoodLogCreate'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MoodLog'
+          description: Successful Response
+        '400': *id001
+        '401': *id002
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+        '500': *id003
+      security:
+      - OAuth2PasswordBearer: []
+      summary: Log Mood
+      tags:
+      - Mood
+  /api/mood/patterns:
+    get:
+      description: Detect emotional patterns from journal entries
+      operationId: detect_patterns_api_mood_patterns_get
+      requestBody:
+        content:
+          application/json:
+            schema:
+              items:
+                type: string
+              title: Journal Entries
+              type: array
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                title: Response Detect Patterns Api Mood Patterns Get
+                type: string
+          description: Successful Response
+        '400': *id001
+        '401': *id002
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+        '500': *id003
+      security:
+      - OAuth2PasswordBearer: []
+      summary: Detect Patterns
+      tags:
+      - Mood

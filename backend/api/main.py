@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from fastapi.openapi.utils import get_openapi
 from backend.shared.auth import get_current_user
 from backend.shared.cosmos import check_database_connection
 import asyncio
@@ -11,7 +12,7 @@ from backend.shared.cosmos import CosmosService
 # Enhanced documentation
 app = FastAPI(
     title="Mental Health Companion API",
-    description="Backend API for the Mental Health Companion application.\n\nThis API provides endpoints for authentication, journaling, mood tracking, mindfulness exercises, and insights.",
+    description="API for mental health tracking and mindfulness exercises",
     version="1.0.0",
     openapi_tags=[
         {"name": "Authentication", "description": "Endpoints related to user authentication."},
@@ -70,7 +71,7 @@ authenticated_dependency = [Depends(get_current_user)]
 # Updated router imports and usage
 from backend.api.routers import auth, journal, mood, mindfulness, insights
 
-app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
+app.include_router(auth.router, prefix="/api/auth/user", tags=["Authentication"])
 app.include_router(
     journal.router, 
     prefix="/api/journal", 
@@ -95,6 +96,109 @@ app.include_router(
     tags=["Insights"], 
     dependencies=authenticated_dependency
 )
+
+# Custom OpenAPI schema generation
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+    
+    openapi_schema = get_openapi(
+        title=app.title,
+        version=app.version,
+        description=app.description,
+        routes=app.routes,
+    )
+    
+    # Add security scheme
+    openapi_schema["components"]["securitySchemes"] = {
+        "bearerAuth": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT",
+        }
+    }
+    
+    # Define standard error responses
+    standard_responses = {
+        "400": {
+            "description": "Bad Request",
+            "content": {
+                "application/json": {
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "detail": {"type": "string"}
+                        }
+                    }
+                }
+            }
+        },
+        "401": {
+            "description": "Unauthorized",
+            "content": {
+                "application/json": {
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "detail": {"type": "string"}
+                        }
+                    }
+                }
+            }
+        },
+        "404": {
+            "description": "Not Found",
+            "content": {
+                "application/json": {
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "detail": {"type": "string"}
+                        }
+                    }
+                }
+            }
+        },
+        "500": {
+            "description": "Internal Server Error",
+            "content": {
+                "application/json": {
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "detail": {"type": "string"}
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    # Apply standard responses to each path
+    for path in openapi_schema["paths"]:
+        for method in openapi_schema["paths"][path]:
+            if method.lower() not in ("get", "post", "put", "delete", "patch"):
+                continue
+            
+            # Skip adding error responses to the health check endpoint
+            if path == "/health/status" and method.lower() == "get":
+                continue
+                
+            # Add relevant responses
+            openapi_schema["paths"][path][method]["responses"].update({
+                "400": standard_responses["400"],
+                "401": standard_responses["401"],
+                "500": standard_responses["500"]
+            })
+            
+            # Add 404 to certain methods (get by ID, update, delete)
+            if any(pattern in path for pattern in ["/{", "/user/"]) and method.lower() in ("get", "put", "delete"):
+                openapi_schema["paths"][path][method]["responses"]["404"] = standard_responses["404"]
+    
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+app.openapi = custom_openapi
 
 def main():
     async def run():
