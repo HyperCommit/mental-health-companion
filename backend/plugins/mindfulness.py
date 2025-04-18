@@ -10,11 +10,11 @@ class MindfulnessPlugin(KernelPlugin):
     """Plugin for mindfulness exercises and tracking"""
 
     _cosmos_service: CosmosService = PrivateAttr()
+    _sentiment_analyzer = None  # Lazy-loaded
 
     def __init__(self, kernel, cosmos_service: CosmosService, name: str = "MindfulnessPlugin"):
         super().__init__(name=name)
         self._kernel = kernel
-        # Remove dependency on non-existent time plugin
         self._memory = kernel.memory if hasattr(kernel, 'memory') else None
         self._cosmos_service = cosmos_service
 
@@ -59,7 +59,17 @@ class MindfulnessPlugin(KernelPlugin):
             return f"Exercise type '{exercise_type}' not found. Available exercises: {', '.join(self._exercises.keys())}"
 
         exercise = self._exercises[exercise_type]
-        current_time = datetime.now().strftime("%H:%M:%S")
+        
+        # Get current time from kernel's time plugin if available, otherwise use local time
+        try:
+            if hasattr(self._kernel, 'get_plugin') and self._kernel.get_plugin('time'):
+                time_plugin = self._kernel.get_plugin('time')
+                current_time = await time_plugin.get_current_time()
+            else:
+                current_time = datetime.now().isoformat()
+        except Exception:
+            # Fallback to local time with ISO format if time plugin fails
+            current_time = datetime.now().isoformat()
         
         response = [
             f"Starting {exercise_type} exercise at {current_time}",
@@ -132,3 +142,40 @@ class MindfulnessPlugin(KernelPlugin):
                 stats["exercises"][exercise_type]["total_duration"] += data.get("duration", 0)
         
         return stats
+
+    @kernel_function(description="Analyzes user feedback about mindfulness sessions")
+    async def analyze_feedback(self, feedback: str) -> Dict:
+        """Analyze user feedback using sentiment analysis."""
+        # Lazy-load the sentiment analyzer only when needed
+        if self._sentiment_analyzer is None:
+            try:
+                from transformers import pipeline
+                self._sentiment_analyzer = pipeline("sentiment-analysis", 
+                                                 model="distilbert-base-uncased-finetuned-sst-2-english")
+            except ImportError:
+                return {"error": "Transformers library not installed. Install with: pip install transformers torch"}
+            except Exception as e:
+                return {"error": f"Failed to load sentiment analysis model: {str(e)}"}
+        
+        try:
+            result = self._sentiment_analyzer(feedback)
+            
+            # Save the feedback and analysis result
+            timestamp = datetime.now().isoformat()
+            feedback_data = {
+                "feedback": feedback,
+                "sentiment": result[0],
+                "timestamp": timestamp
+            }
+            
+            # Store in memory if available
+            if self._memory:
+                await self._memory.save_information(
+                    collection="mindfulness_feedback",
+                    text=json.dumps(feedback_data),
+                    id=timestamp
+                )
+            
+            return result[0]  # Return just the sentiment analysis result
+        except Exception as e:
+            return {"error": f"Error analyzing feedback: {str(e)}"}
