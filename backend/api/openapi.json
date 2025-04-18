@@ -1,0 +1,3952 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Mental Health Companion API",
+    "description": "API for mental health tracking and mindfulness exercises",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/health": {
+      "get": {
+        "summary": "Health Check",
+        "operationId": "health_check_api_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/user/user": {
+      "get": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Get Current User Profile",
+        "description": "Retrieve the current user's profile",
+        "operationId": "get_current_user_profile_api_auth_user_user_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - The request is malformed or contains invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Invalid request parameters",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required or has failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "auth_required": {
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Not authenticated",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z",
+                  "auth_required": true
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - You don't have permission to access this resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "permission_required": {
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "You don't have permission to access this resource",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z",
+                  "permission_required": true
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - An unexpected error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "An unexpected error occurred.",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource does not exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "resource": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Resource not found",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z",
+                  "resource": "/api/journal/12345"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/auth/user/user/register": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Register User",
+        "description": "Register a new user",
+        "operationId": "register_user_api_auth_user_user_register_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity - Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string"
+                          },
+                          "msg": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Validation error",
+                  "details": [
+                    {
+                      "field": "email",
+                      "type": "value_error.email",
+                      "msg": "value is not a valid email address"
+                    }
+                  ],
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - The request is malformed or contains invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Invalid request parameters",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required or has failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "auth_required": {
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Not authenticated",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z",
+                  "auth_required": true
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - You don't have permission to access this resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "permission_required": {
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "You don't have permission to access this resource",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z",
+                  "permission_required": true
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - An unexpected error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "An unexpected error occurred.",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/user/user/update": {
+      "put": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Update User Profile",
+        "description": "Update the current user's profile",
+        "operationId": "update_user_profile_api_auth_user_user_update_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity - Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string"
+                          },
+                          "msg": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Validation error",
+                  "details": [
+                    {
+                      "field": "email",
+                      "type": "value_error.email",
+                      "msg": "value is not a valid email address"
+                    }
+                  ],
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - The request is malformed or contains invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Invalid request parameters",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required or has failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "auth_required": {
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Not authenticated",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z",
+                  "auth_required": true
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - You don't have permission to access this resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "permission_required": {
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "You don't have permission to access this resource",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z",
+                  "permission_required": true
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - An unexpected error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "An unexpected error occurred.",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource does not exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "resource": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Resource not found",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z",
+                  "resource": "/api/journal/12345"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/auth/user/user/token": {
+      "post": {
+        "tags": [
+          "Authentication"
+        ],
+        "summary": "Login For Access Token",
+        "description": "Authenticate user and return a JWT token",
+        "operationId": "login_for_access_token_api_auth_user_user_token_post",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_login_for_access_token_api_auth_user_user_token_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity - Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string"
+                          },
+                          "msg": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Validation error",
+                  "details": [
+                    {
+                      "field": "email",
+                      "type": "value_error.email",
+                      "msg": "value is not a valid email address"
+                    }
+                  ],
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - The request is malformed or contains invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Invalid request parameters",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required or has failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "auth_required": {
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Not authenticated",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z",
+                  "auth_required": true
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - You don't have permission to access this resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "permission_required": {
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "You don't have permission to access this resource",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z",
+                  "permission_required": true
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - An unexpected error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "An unexpected error occurred.",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/journal/": {
+      "get": {
+        "tags": [
+          "Journal"
+        ],
+        "summary": "Get Journal Entries",
+        "description": "Get all journal entries for the current user",
+        "operationId": "get_journal_entries_api_journal__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/JournalEntry"
+                  },
+                  "title": "Response Get Journal Entries Api Journal  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - The request is malformed or contains invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Invalid request parameters",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required or has failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "auth_required": {
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Not authenticated",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z",
+                  "auth_required": true
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - You don't have permission to access this resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "permission_required": {
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "You don't have permission to access this resource",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z",
+                  "permission_required": true
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - An unexpected error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "An unexpected error occurred.",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Journal"
+        ],
+        "summary": "Create Journal Entry",
+        "description": "Create a new journal entry",
+        "operationId": "create_journal_entry_api_journal__post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JournalEntryCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JournalEntry"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity - Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string"
+                          },
+                          "msg": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Validation error",
+                  "details": [
+                    {
+                      "field": "email",
+                      "type": "value_error.email",
+                      "msg": "value is not a valid email address"
+                    }
+                  ],
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - The request is malformed or contains invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Invalid request parameters",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required or has failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "auth_required": {
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Not authenticated",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z",
+                  "auth_required": true
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - You don't have permission to access this resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "permission_required": {
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "You don't have permission to access this resource",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z",
+                  "permission_required": true
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - An unexpected error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "An unexpected error occurred.",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/journal/{entry_id}": {
+      "get": {
+        "tags": [
+          "Journal"
+        ],
+        "summary": "Get Journal Entry",
+        "description": "Get a specific journal entry",
+        "operationId": "get_journal_entry_api_journal__entry_id__get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "entry_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Entry Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JournalEntry"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - The request is malformed or contains invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Invalid request parameters",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required or has failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "auth_required": {
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Not authenticated",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z",
+                  "auth_required": true
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - You don't have permission to access this resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "permission_required": {
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "You don't have permission to access this resource",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z",
+                  "permission_required": true
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - An unexpected error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "An unexpected error occurred.",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource does not exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "resource": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Resource not found",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z",
+                  "resource": "/api/journal/12345"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Journal"
+        ],
+        "summary": "Update Journal Entry",
+        "description": "Update a journal entry",
+        "operationId": "update_journal_entry_api_journal__entry_id__put",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "entry_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Entry Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JournalEntryUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JournalEntry"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity - Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string"
+                          },
+                          "msg": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Validation error",
+                  "details": [
+                    {
+                      "field": "email",
+                      "type": "value_error.email",
+                      "msg": "value is not a valid email address"
+                    }
+                  ],
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - The request is malformed or contains invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Invalid request parameters",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required or has failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "auth_required": {
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Not authenticated",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z",
+                  "auth_required": true
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - You don't have permission to access this resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "permission_required": {
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "You don't have permission to access this resource",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z",
+                  "permission_required": true
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - An unexpected error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "An unexpected error occurred.",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource does not exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "resource": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Resource not found",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z",
+                  "resource": "/api/journal/12345"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Journal"
+        ],
+        "summary": "Delete Journal Entry",
+        "description": "Delete a journal entry",
+        "operationId": "delete_journal_entry_api_journal__entry_id__delete",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "entry_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Entry Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - The request is malformed or contains invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Invalid request parameters",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required or has failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "auth_required": {
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Not authenticated",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z",
+                  "auth_required": true
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - You don't have permission to access this resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "permission_required": {
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "You don't have permission to access this resource",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z",
+                  "permission_required": true
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - An unexpected error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "An unexpected error occurred.",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found - The requested resource does not exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "resource": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Resource not found",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z",
+                  "resource": "/api/journal/12345"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/journal/prompt": {
+      "post": {
+        "tags": [
+          "Journal"
+        ],
+        "summary": "Generate Journal Prompt",
+        "description": "Generate a journaling prompt based on mood",
+        "operationId": "generate_journal_prompt_api_journal_prompt_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "mood",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Mood"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Generate Journal Prompt Api Journal Prompt Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity - Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string"
+                          },
+                          "msg": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Validation error",
+                  "details": [
+                    {
+                      "field": "email",
+                      "type": "value_error.email",
+                      "msg": "value is not a valid email address"
+                    }
+                  ],
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - The request is malformed or contains invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Invalid request parameters",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required or has failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "auth_required": {
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Not authenticated",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z",
+                  "auth_required": true
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - You don't have permission to access this resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "permission_required": {
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "You don't have permission to access this resource",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z",
+                  "permission_required": true
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - An unexpected error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "An unexpected error occurred.",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mood/analyze": {
+      "post": {
+        "tags": [
+          "Mood"
+        ],
+        "summary": "Analyze Mood",
+        "description": "Analyze mood from text",
+        "operationId": "analyze_mood_api_mood_analyze_post",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "input_text",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Input Text"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Analyze Mood Api Mood Analyze Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity - Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string"
+                          },
+                          "msg": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Validation error",
+                  "details": [
+                    {
+                      "field": "email",
+                      "type": "value_error.email",
+                      "msg": "value is not a valid email address"
+                    }
+                  ],
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - The request is malformed or contains invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Invalid request parameters",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required or has failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "auth_required": {
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Not authenticated",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z",
+                  "auth_required": true
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - You don't have permission to access this resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "permission_required": {
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "You don't have permission to access this resource",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z",
+                  "permission_required": true
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - An unexpected error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "An unexpected error occurred.",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mood/log": {
+      "post": {
+        "tags": [
+          "Mood"
+        ],
+        "summary": "Log Mood",
+        "description": "Log a mood entry",
+        "operationId": "log_mood_api_mood_log_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoodLogCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MoodLog"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity - Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string"
+                          },
+                          "msg": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Validation error",
+                  "details": [
+                    {
+                      "field": "email",
+                      "type": "value_error.email",
+                      "msg": "value is not a valid email address"
+                    }
+                  ],
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - The request is malformed or contains invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Invalid request parameters",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required or has failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "auth_required": {
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Not authenticated",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z",
+                  "auth_required": true
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - You don't have permission to access this resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "permission_required": {
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "You don't have permission to access this resource",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z",
+                  "permission_required": true
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - An unexpected error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "An unexpected error occurred.",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/mood/patterns": {
+      "get": {
+        "tags": [
+          "Mood"
+        ],
+        "summary": "Detect Patterns",
+        "description": "Detect emotional patterns from journal entries",
+        "operationId": "detect_patterns_api_mood_patterns_get",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array",
+                "title": "Journal Entries"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "title": "Response Detect Patterns Api Mood Patterns Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - The request is malformed or contains invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Invalid request parameters",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required or has failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "auth_required": {
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Not authenticated",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z",
+                  "auth_required": true
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - You don't have permission to access this resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "permission_required": {
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "You don't have permission to access this resource",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z",
+                  "permission_required": true
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - An unexpected error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "An unexpected error occurred.",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/mindfulness/exercise": {
+      "get": {
+        "tags": [
+          "Mindfulness"
+        ],
+        "summary": "Guide Exercise",
+        "description": "Guide a mindfulness exercise",
+        "operationId": "guide_exercise_api_mindfulness_exercise_get",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "exercise_type",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Exercise Type"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "title": "Response Guide Exercise Api Mindfulness Exercise Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - The request is malformed or contains invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Invalid request parameters",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required or has failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "auth_required": {
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Not authenticated",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z",
+                  "auth_required": true
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - You don't have permission to access this resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "permission_required": {
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "You don't have permission to access this resource",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z",
+                  "permission_required": true
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - An unexpected error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "An unexpected error occurred.",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mindfulness/track": {
+      "post": {
+        "tags": [
+          "Mindfulness"
+        ],
+        "summary": "Track Progress",
+        "description": "Track mindfulness progress",
+        "operationId": "track_progress_api_mindfulness_track_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "type": "object",
+                "title": "Session Data"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "title": "Response Track Progress Api Mindfulness Track Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity - Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string"
+                          },
+                          "msg": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Validation error",
+                  "details": [
+                    {
+                      "field": "email",
+                      "type": "value_error.email",
+                      "msg": "value is not a valid email address"
+                    }
+                  ],
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - The request is malformed or contains invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Invalid request parameters",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required or has failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "auth_required": {
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Not authenticated",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z",
+                  "auth_required": true
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - You don't have permission to access this resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "permission_required": {
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "You don't have permission to access this resource",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z",
+                  "permission_required": true
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - An unexpected error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "An unexpected error occurred.",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/mindfulness/statistics": {
+      "get": {
+        "tags": [
+          "Mindfulness"
+        ],
+        "summary": "Get Statistics",
+        "description": "Get mindfulness statistics",
+        "operationId": "get_statistics_api_mindfulness_statistics_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Statistics Api Mindfulness Statistics Get"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - The request is malformed or contains invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Invalid request parameters",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required or has failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "auth_required": {
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Not authenticated",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z",
+                  "auth_required": true
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - You don't have permission to access this resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "permission_required": {
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "You don't have permission to access this resource",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z",
+                  "permission_required": true
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - An unexpected error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "An unexpected error occurred.",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/insights/weekly": {
+      "get": {
+        "tags": [
+          "Insights"
+        ],
+        "summary": "Get Weekly Insights",
+        "description": "Retrieve weekly insights for the current user",
+        "operationId": "get_weekly_insights_api_insights_weekly_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Weekly Insights Api Insights Weekly Get"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - The request is malformed or contains invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Invalid request parameters",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required or has failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "auth_required": {
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Not authenticated",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z",
+                  "auth_required": true
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - You don't have permission to access this resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "permission_required": {
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "You don't have permission to access this resource",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z",
+                  "permission_required": true
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - An unexpected error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "An unexpected error occurred.",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/api/insights/patterns": {
+      "get": {
+        "tags": [
+          "Insights"
+        ],
+        "summary": "Get Emotional Patterns",
+        "description": "Retrieve emotional patterns for the current user",
+        "operationId": "get_emotional_patterns_api_insights_patterns_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Emotional Patterns Api Insights Patterns Get"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - The request is malformed or contains invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Invalid request parameters",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication is required or has failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "auth_required": {
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Not authenticated",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z",
+                  "auth_required": true
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - You don't have permission to access this resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "permission_required": {
+                      "type": "boolean"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "You don't have permission to access this resource",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z",
+                  "permission_required": true
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - An unexpected error occurred",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "correlation_id": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "An unexpected error occurred.",
+                  "correlation_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "timestamp": "2025-04-18T12:34:56.789Z"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Body_login_for_access_token_api_auth_user_user_token_post": {
+        "properties": {
+          "grant_type": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^password$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grant Type"
+          },
+          "username": {
+            "type": "string",
+            "title": "Username"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password"
+          },
+          "scope": {
+            "type": "string",
+            "title": "Scope",
+            "default": ""
+          },
+          "client_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Id"
+          },
+          "client_secret": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Secret"
+          }
+        },
+        "type": "object",
+        "required": [
+          "username",
+          "password"
+        ],
+        "title": "Body_login_for_access_token_api_auth_user_user_token_post"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "JournalEntry": {
+        "properties": {
+          "content": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Content"
+          },
+          "mood_indicators": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Mood Indicators"
+          },
+          "mood_score": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 10.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mood Score"
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "user_id": {
+            "type": "string",
+            "title": "User Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          },
+          "ai_insights": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Insights"
+          },
+          "sentiment_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sentiment Score"
+          }
+        },
+        "type": "object",
+        "required": [
+          "content",
+          "user_id"
+        ],
+        "title": "JournalEntry"
+      },
+      "JournalEntryCreate": {
+        "properties": {
+          "content": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Content"
+          },
+          "mood_indicators": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Mood Indicators"
+          },
+          "mood_score": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 10.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mood Score"
+          }
+        },
+        "type": "object",
+        "required": [
+          "content"
+        ],
+        "title": "JournalEntryCreate"
+      },
+      "JournalEntryUpdate": {
+        "properties": {
+          "content": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content"
+          },
+          "mood_indicators": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mood Indicators"
+          },
+          "mood_score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mood Score"
+          }
+        },
+        "type": "object",
+        "title": "JournalEntryUpdate"
+      },
+      "MoodLog": {
+        "properties": {
+          "mood_score": {
+            "type": "integer",
+            "maximum": 10.0,
+            "minimum": 1.0,
+            "title": "Mood Score"
+          },
+          "mood_labels": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Mood Labels"
+          },
+          "context": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Context"
+          },
+          "factors": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Factors"
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "user_id": {
+            "type": "string",
+            "title": "User Id"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "sentiment_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sentiment Score"
+          }
+        },
+        "type": "object",
+        "required": [
+          "mood_score",
+          "user_id"
+        ],
+        "title": "MoodLog"
+      },
+      "MoodLogCreate": {
+        "properties": {
+          "mood_score": {
+            "type": "integer",
+            "maximum": 10.0,
+            "minimum": 1.0,
+            "title": "Mood Score"
+          },
+          "mood_labels": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Mood Labels"
+          },
+          "context": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Context"
+          },
+          "factors": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Factors"
+          }
+        },
+        "type": "object",
+        "required": [
+          "mood_score"
+        ],
+        "title": "MoodLogCreate"
+      },
+      "User": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "subscription_tier": {
+            "type": "string",
+            "title": "Subscription Tier",
+            "default": "free"
+          },
+          "preferences": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Preferences"
+          },
+          "profile": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Profile"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "id",
+          "created_at"
+        ],
+        "title": "User"
+      },
+      "UserCreate": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "title": "Email"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email"
+        ],
+        "title": "UserCreate"
+      },
+      "UserUpdate": {
+        "properties": {
+          "email": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "email"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "preferences": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preferences"
+          },
+          "profile": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Profile"
+          },
+          "subscription_tier": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subscription Tier"
+          }
+        },
+        "type": "object",
+        "title": "UserUpdate"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}
