@@ -1,8 +1,10 @@
+import pytest
 import asyncio
 import os
 from dotenv import load_dotenv
 from backend.shared.kernel import KernelService
 
+@pytest.mark.asyncio
 async def test_remote_models():
     """Test remote model functionality"""
     load_dotenv()
