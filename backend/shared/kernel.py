@@ -8,7 +8,7 @@ from semantic_kernel.connectors.ai.hugging_face import HuggingFaceTextCompletion
 from semantic_kernel.connectors.ai.open_ai import AzureTextCompletion, OpenAITextCompletion
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 from azure.identity import DefaultAzureCredential
-from azure.keyvault.secrets import SecretClient
+#from azure.keyvault.secrets import SecretClient
 from dotenv import load_dotenv
 
 class KernelService:
