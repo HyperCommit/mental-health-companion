@@ -1,94 +1,139 @@
 import os
+import logging
+import time
+import uuid
 from pathlib import Path
 import semantic_kernel as sk
 from semantic_kernel.connectors.ai.hugging_face import HuggingFaceTextCompletion
-from huggingface_hub import snapshot_download
+from semantic_kernel.connectors.ai.open_ai import AzureTextCompletion, OpenAITextCompletion
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from azure.identity import DefaultAzureCredential
+from azure.keyvault.secrets import SecretClient
 from dotenv import load_dotenv
-from infrastructure.config.settings import get_settings
-from backend.shared.cosmos import CosmosService
-
-settings = get_settings()
 
 class KernelService:
     """Service for managing Semantic Kernel instances and operations"""
     
     def __init__(self):
+        """Initialize the kernel service with proper configuration"""
+        load_dotenv()
         self.kernel = self._initialize_kernel()
-    
-    def _download_model(self, model_name: str) -> str:
-        """Download model from HuggingFace Hub if not present locally"""
-        cache_dir = Path.home() / ".cache" / "huggingface" / "hub"
-        model_path = cache_dir / model_name
-        
-        if not model_path.exists():
-            model_path = snapshot_download(
-                repo_id=model_name,
-                cache_dir=str(cache_dir)
-            )
-            
-        return str(model_path)
+        self.correlation_prefix = f"mhc-{uuid.uuid4().hex[:6]}"
     
     def _initialize_kernel(self):
-        """Initialize and configure Semantic Kernel with local models"""
-        load_dotenv()
-        
-        # Create kernel instance
+        """Initialize and configure Semantic Kernel with remote models"""
         kernel = sk.Kernel()
         
-        # Get model names from settings
-        conversation_model = settings["primary_model"]
+        # Get API key securely
+        hf_api_token = self._get_secret("HUGGINGFACE_API_TOKEN")
         
-        # Download model if not present locally
-        conversation_path = self._download_model(conversation_model)
+        # Get model configurations
+        primary_model = os.environ.get("PRIMARY_MODEL", "gpt2")
+        sentiment_model = os.environ.get("SENTIMENT_MODEL", 
+                                        "distilbert-base-uncased-finetuned-sst-2-english")
         
-        # Create text completion service with a proper text-to-text model
+        # Configure primary conversation model
         conversation_service = HuggingFaceTextCompletion(
-            service_id="conversation",
-            ai_model_id=conversation_path,
-            device=-1  # Use -1 for CPU, or 0+ for specific GPU devices
+            model_id=primary_model,
+            api_key=hf_api_token
         )
+        kernel.add_text_completion_service("conversation", conversation_service)
+        logging.info(f"Configured remote conversation model: {primary_model}")
         
-        # Add services to the kernel using dictionary assignment
-        # Since kernel.services is a dictionary in version 1.28.0
-        kernel.services["conversation"] = conversation_service
-        
-        # Create an instance of CosmosService to pass to plugins
-        cosmos_service = CosmosService()
+        # Configure sentiment analysis model
+        sentiment_service = HuggingFaceTextCompletion(
+            model_id=sentiment_model,
+            api_key=hf_api_token
+        )
+        kernel.add_text_completion_service("sentiment", sentiment_service)
+        logging.info(f"Configured remote sentiment analysis model: {sentiment_model}")
         
         # Register plugins
-        from backend.plugins.mood_analyzer import MoodAnalyzerPlugin
-        from backend.plugins.journaling import JournalingPlugin
-        from backend.plugins.mindfulness import MindfulnessPlugin
-        from backend.plugins.safety import SafetyPlugin
-        
-        # Initialize plugins with the required parameters
-        mood_plugin = MoodAnalyzerPlugin(cosmos_service=cosmos_service, kernel=kernel)
-        journal_plugin = JournalingPlugin(kernel=kernel, cosmos_service=cosmos_service)
-        mindfulness_plugin = MindfulnessPlugin(kernel=kernel, cosmos_service=cosmos_service)
-        
-        # SafetyPlugin has a different initialization pattern
-        safety_plugin = SafetyPlugin(cosmos_service=cosmos_service)
-        safety_plugin.set_kernel(kernel)  # Set kernel using the separate method
-        
-        # Add initialized plugins to the kernel
-        kernel.add_plugin(mood_plugin, "mood")
-        kernel.add_plugin(journal_plugin, "journal")
-        kernel.add_plugin(mindfulness_plugin, "mindfulness")
-        kernel.add_plugin(safety_plugin, "safety")
+        self._register_plugins(kernel)
         
         return kernel
     
+    def _get_secret(self, secret_name):
+        """Get a secret from Azure Key Vault or environment variables"""
+        # In production, use Key Vault with Managed Identity
+        if os.environ.get("AZURE_KEYVAULT_URL"):
+            try:
+                credential = DefaultAzureCredential()
+                vault_url = os.environ.get("AZURE_KEYVAULT_URL")
+                client = SecretClient(vault_url=vault_url, credential=credential)
+                return client.get_secret(secret_name).value
+            except Exception as e:
+                logging.warning(f"Failed to get secret from Key Vault: {str(e)}")
+                logging.warning("Falling back to environment variable")
+        
+        # Fallback to environment variable
+        return os.environ.get(secret_name)
+    
+    def _register_plugins(self, kernel):
+        """Register semantic kernel plugins"""
+        try:
+            # Import and register your plugins here
+            from backend.plugins.mood_analyzer import MoodAnalyzerPlugin
+            from backend.plugins.journaling import JournalingPlugin
+            from backend.plugins.mindfulness import MindfulnessPlugin
+            
+            # Register plugins with the kernel
+            kernel.add_plugin(MoodAnalyzerPlugin(kernel), "mood")
+            kernel.add_plugin(JournalingPlugin(kernel), "journal")
+            kernel.add_plugin(MindfulnessPlugin(kernel), "mindfulness")
+            
+            logging.info("Successfully registered all plugins")
+        except Exception as e:
+            logging.error(f"Error registering plugins: {str(e)}")
+    
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=1, max=10),
+        retry=retry_if_exception_type((ConnectionError, TimeoutError))
+    )
+    async def _call_remote_model(self, plugin_name, function_name, **kwargs):
+        """Call a remote model with retry logic and telemetry"""
+        correlation_id = f"{self.correlation_prefix}-{uuid.uuid4().hex[:8]}"
+        start_time = time.time()
+        
+        logging.info(f"Calling remote model", extra={
+            "correlation_id": correlation_id,
+            "plugin": plugin_name,
+            "function": function_name,
+            "params": {k: v for k, v in kwargs.items() if k != "input" or len(str(v)) < 50}
+        })
+        
+        try:
+            result = await self.kernel.invoke_plugin(plugin_name, function_name, **kwargs)
+            
+            elapsed_ms = (time.time() - start_time) * 1000
+            logging.info(f"Remote model call completed in {elapsed_ms:.2f}ms", extra={
+                "correlation_id": correlation_id,
+                "elapsed_ms": elapsed_ms
+            })
+            
+            return result
+        except Exception as e:
+            elapsed_ms = (time.time() - start_time) * 1000
+            logging.error(f"Remote model call failed: {str(e)}", extra={
+                "correlation_id": correlation_id,
+                "elapsed_ms": elapsed_ms,
+                "error": str(e)
+            })
+            raise
+    
+    # Replace direct kernel calls with the enhanced method
     async def analyze_mood(self, text):
-        """Analyze text to determine mood"""
-        result = await self.kernel.invoke_plugin("mood", "analyze_mood", input=text)
+        """Analyze text to determine mood using remote model"""
+        result = await self._call_remote_model("mood", "analyze_mood", input=text)
         return {"mood": str(result).strip()}
     
     async def generate_journal_prompt(self, mood=None):
         """Generate a journal prompt based on mood"""
-        result = await self.kernel.invoke_plugin("journal", "create_prompt", mood=mood or "")
+        result = await self._call_remote_model("journal", "create_prompt", mood=mood or "")
         return str(result).strip()
     
     async def analyze_journal_entry(self, entry):
         """Analyze a journal entry for insights"""
-        result = await self.kernel.invoke_plugin("journal", "analyze_entry", entry=entry)
+        result = await self._call_remote_model("journal", "analyze_entry", entry=entry)
         return {"insights": str(result).strip()}
