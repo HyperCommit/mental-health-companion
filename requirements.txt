@@ -6,7 +6,6 @@ transformers>=4.30.0
 datasets
 torch>=2.0.0
 azure-keyvault-secrets>=4.7.0
-dotenv
 firebase-admin
 pydantic
 chainlit
@@ -14,3 +13,5 @@ pytest
 pytest-asyncio
 azure-cosmos
 email-validator
+dotenv
+python-dotenv
