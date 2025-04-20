@@ -66,8 +66,8 @@ The Mental Health Companion is an AI-powered application that provides personali
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
 │  User Input │────▶│Risk Detection────▶│ Resources & │
-│             │     │              │    │ Support     │
-└─────────────┘     └──────┬──────┘    └─────────────┘
+│             │     │             │     │ Support     │
+└─────────────┘     └──────┬──────┘     └─────────────┘
                            │No Risk
                            ▼
                     ┌─────────────┐
