@@ -59,9 +59,9 @@ class SafetyPlugin(KernelPlugin):
 
     @kernel_function(description="Assesses risk level in user text")
     @retry(
-        stop=stop_after_attempt(3),
-        wait=wait_exponential(multiplier=1, min=1, max=10),
-        retry_if_exception_type((ConnectionError, TimeoutError))
+        wait_exponential(multiplier=1, min=1, max=10),  # positional arguments first
+        stop=stop_after_attempt(3),  # then keyword arguments
+        retry=retry_if_exception_type((ConnectionError, TimeoutError))
     )
     async def assess_risk(self, input_text: str) -> Dict:
         """

@@ -6,7 +6,8 @@ from typing import Dict, Any, Optional
 
 from semantic_kernel.agents import ChatCompletionAgent,ChatHistoryAgentThread
 from semantic_kernel.contents import ChatMessageContent, AuthorRole
-from semantic_kernel.connectors.ai.open_ai.prompt_execution_settings import OpenAIChatPromptExecutionSettings
+from semantic_kernel.connectors.ai.open_ai import OpenAIChatPromptExecutionSettings
+#from semantic_kernel.prompt_template import PromptExecutionSettings
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 from opencensus.ext.azure.log_exporter import AzureLogHandler
 

@@ -8,7 +8,8 @@ from pathlib import Path
 import semantic_kernel as sk
 # Replace HuggingFace imports with Azure OpenAI
 from semantic_kernel.connectors.ai.open_ai import AzureChatCompletion, AzureTextCompletion
-from semantic_kernel.connectors.ai.open_ai.prompt_execution_settings import OpenAIChatPromptExecutionSettings
+from semantic_kernel.connectors.ai.open_ai import OpenAIChatPromptExecutionSettings
+#from semantic_kernel.prompt_template import PromptExecutionSettings
 from semantic_kernel.agents import ChatCompletionAgent,ChatHistoryAgentThread
 from semantic_kernel.contents import ChatMessageContent, AuthorRole
 from semantic_kernel.contents import ChatHistory
