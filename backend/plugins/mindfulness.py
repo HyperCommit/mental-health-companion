@@ -5,18 +5,28 @@ import json
 from datetime import datetime
 from backend.shared.cosmos import CosmosService
 from pydantic import PrivateAttr
+import logging
+import uuid
+from tenacity import retry, stop_after_attempt, wait_exponential
+from backend.shared.azure_agent_service import AzureAgentService
 
 class MindfulnessPlugin(KernelPlugin):
-    """Plugin for mindfulness exercises and tracking"""
+    """Plugin for mindfulness exercises and tracking using Azure OpenAI"""
 
     _cosmos_service: CosmosService = PrivateAttr()
-    _sentiment_analyzer = None  # Lazy-loaded
+    _kernel = PrivateAttr()
+    _agent_service: AzureAgentService = PrivateAttr(default=None)
+    _conversation_agent = PrivateAttr(default=None)
+    _classification_agent = PrivateAttr(default=None)
+    _correlation_prefix: str = PrivateAttr(default="mindful")
 
     def __init__(self, kernel, cosmos_service: CosmosService, name: str = "MindfulnessPlugin"):
         super().__init__(name=name)
         self._kernel = kernel
         self._memory = kernel.memory if hasattr(kernel, 'memory') else None
         self._cosmos_service = cosmos_service
+        self._agent_service = AzureAgentService(kernel)
+        self._correlation_prefix = f"mindful-{uuid.uuid4().hex[:6]}"
 
         self._exercises = {
             "breathing": {
@@ -52,119 +62,151 @@ class MindfulnessPlugin(KernelPlugin):
             }
         }
 
+    def _get_conversation_agent(self):
+        """Get or create the conversation agent"""
+        if not self._conversation_agent:
+            self._conversation_agent = self._agent_service.create_conversation_agent(
+                instructions="""You are a mindfulness meditation guide.
+                Provide calming, supportive guidance for mindfulness practices.
+                Use clear, simple language with a gentle, soothing tone.
+                Focus on present moment awareness, acceptance, and compassion.
+                Never provide medical advice."""
+            )
+        return self._conversation_agent
+
+    def _get_classification_agent(self):
+        """Get or create the classification agent"""
+        if not self._classification_agent:
+            self._classification_agent = self._agent_service.create_classification_agent(
+                instructions="""You analyze feedback about mindfulness experiences.
+                Identify sentiment (positive/negative/neutral) and key themes.
+                Look for indications of effectiveness and challenges.
+                Return analysis in JSON format with 'sentiment', 'effectiveness',
+                and 'themes' fields."""
+            )
+        return self._classification_agent
+
     @kernel_function(description="Guides a mindfulness exercise")
     async def guide_exercise(self, exercise_type: str) -> str:
-        """Provide guidance for a specific mindfulness exercise."""
+        """Provide guidance for a specific mindfulness exercise using Azure OpenAI."""
+        correlation_id = f"{self._correlation_prefix}-guide-{uuid.uuid4().hex[:8]}"
+        
         if exercise_type not in self._exercises:
+            logging.warning(f"Invalid exercise type: {exercise_type}", extra={"custom_dimensions": {
+                "correlation_id": correlation_id
+            }})
             return f"Exercise type '{exercise_type}' not found. Available exercises: {', '.join(self._exercises.keys())}"
 
-        exercise = self._exercises[exercise_type]
-        
-        # Get current time from kernel's time plugin if available, otherwise use local time
         try:
-            if hasattr(self._kernel, 'get_plugin') and self._kernel.get_plugin('time'):
-                time_plugin = self._kernel.get_plugin('time')
-                current_time = await time_plugin.get_current_time()
-            else:
-                current_time = datetime.now().isoformat()
-        except Exception:
-            # Fallback to local time with ISO format if time plugin fails
+            exercise = self._exercises[exercise_type]
             current_time = datetime.now().isoformat()
-        
-        response = [
-            f"Starting {exercise_type} exercise at {current_time}",
-            f"Duration: {exercise['duration'] // 60} minutes\n",
-            "Follow these steps:"
-        ]
-        
-        for i, step in enumerate(exercise['steps'], 1):
-            response.append(f"{i}. {step}")
             
-        return "\n".join(response)
-
-    @kernel_function(description="Tracks mindfulness progress")
-    async def track_progress(self, session_data: Dict) -> str:
-        """Track progress based on mindfulness session data."""
-        timestamp = datetime.now().isoformat()
-        
-        # Add timestamp and store in memory if available
-        session_data["timestamp"] = timestamp
-        if self._memory:
-            await self._memory.save_information(
-                collection="mindfulness_sessions",
-                text=json.dumps(session_data),
-                id=timestamp,
-                metadata={"exercise_type": session_data.get("exercise_type", "unknown")}
+            # Use Azure OpenAI for enhanced guidance
+            agent = self._get_conversation_agent()
+            exercise_result = await self._agent_service.get_agent_response(
+                agent=agent,
+                message=f"""Create a guided meditation script for {exercise_type} practice.
+                Duration: {exercise['duration'] // 60} minutes
+                
+                Include these steps:
+                {', '.join(exercise['steps'])}
+                
+                Make it calming, step-by-step, and suitable for beginners.
+                Start with an introduction and end with a gentle conclusion."""
             )
-        
-        # Save session data to CosmosService
-        user_id = session_data.get("user_id", "unknown")
-        exercise_type = session_data.get("exercise_type", "unknown")
-        duration = session_data.get("duration", 0)
-        await self._cosmos_service.save_mindfulness_session(user_id, exercise_type, duration)
-        
-        # Calculate statistics - if memory is available
-        sessions = []
-        if self._memory:
-            sessions = await self._memory.search(
-                "mindfulness_sessions", 
-                f"exercise_type:{session_data['exercise_type']}"
-            )
-        
-        total_duration = sum(
-            json.loads(s.text).get("duration", 0) 
-            for s in sessions
-        )
-        
-        return (f"Session tracked successfully.\n"
-                f"Total sessions: {len(sessions)}\n"
-                f"Total practice time: {total_duration // 60} minutes")
-
-    @kernel_function(description="Gets mindfulness statistics")
-    async def get_statistics(self) -> Dict:
-        """Retrieve mindfulness practice statistics."""
-        sessions = []
-        if self._memory:
-            sessions = await self._memory.search("mindfulness_sessions", "")
-        
-        stats = {
-            "total_sessions": len(sessions),
-            "exercises": {}
-        }
-        
-        for session in sessions:
-            data = json.loads(session.text)
-            exercise_type = data.get("exercise_type")
-            if exercise_type:
-                if exercise_type not in stats["exercises"]:
-                    stats["exercises"][exercise_type] = {"count": 0, "total_duration": 0}
-                stats["exercises"][exercise_type]["count"] += 1
-                stats["exercises"][exercise_type]["total_duration"] += data.get("duration", 0)
-        
-        return stats
+            
+            guidance = exercise_result.get("response", "")
+            
+            if not guidance:
+                # Fallback to basic guidance
+                response = [
+                    f"Starting {exercise_type} exercise at {current_time}",
+                    f"Duration: {exercise['duration'] // 60} minutes\n",
+                    "Follow these steps:"
+                ]
+                
+                for i, step in enumerate(exercise['steps'], 1):
+                    response.append(f"{i}. {step}")
+                    
+                guidance = "\n".join(response)
+            
+            # Log successful guidance with Azure telemetry
+            logging.info("Generated mindfulness guidance", extra={
+                "custom_dimensions": {
+                    "correlation_id": correlation_id,
+                    "exercise_type": exercise_type,
+                    "guidance_length": len(guidance)
+                }
+            })
+                
+            return guidance
+            
+        except Exception as e:
+            # Log error with Azure telemetry
+            logging.error(f"Error generating exercise guidance: {str(e)}", extra={
+                "custom_dimensions": {
+                    "correlation_id": correlation_id,
+                    "error": str(e),
+                    "exercise_type": exercise_type
+                }
+            })
+            
+            # Fallback to basic guidance
+            exercise = self._exercises.get(exercise_type, {"duration": 300, "steps": ["Focus on your breath"]})
+            response = [
+                f"Starting {exercise_type} exercise",
+                f"Duration: {exercise['duration'] // 60} minutes\n",
+                "Follow these steps:"
+            ]
+            
+            for i, step in enumerate(exercise['steps'], 1):
+                response.append(f"{i}. {step}")
+                
+            return "\n".join(response)
 
     @kernel_function(description="Analyzes user feedback about mindfulness sessions")
     async def analyze_feedback(self, feedback: str) -> Dict:
-        """Analyze user feedback using sentiment analysis."""
-        # Lazy-load the sentiment analyzer only when needed
-        if self._sentiment_analyzer is None:
-            try:
-                from transformers import pipeline
-                self._sentiment_analyzer = pipeline("sentiment-analysis", 
-                                                 model="distilbert-base-uncased-finetuned-sst-2-english")
-            except ImportError:
-                return {"error": "Transformers library not installed. Install with: pip install transformers torch"}
-            except Exception as e:
-                return {"error": f"Failed to load sentiment analysis model: {str(e)}"}
+        """Analyze user feedback using Azure OpenAI sentiment analysis."""
+        correlation_id = f"{self._correlation_prefix}-analyze-{uuid.uuid4().hex[:8]}"
+        
+        if not feedback or not isinstance(feedback, str):
+            return {"error": "Invalid feedback text"}
         
         try:
-            result = self._sentiment_analyzer(feedback)
+            # Use Azure OpenAI for sentiment analysis
+            agent = self._get_classification_agent()
+            analysis_result = await self._agent_service.get_agent_response(
+                agent=agent,
+                message=f"""Analyze this feedback about a mindfulness session:
+                
+                "{feedback}"
+                
+                Return a JSON object with:
+                1. sentiment: (positive, negative, or neutral)
+                2. effectiveness: rating from 1-10 based on the feedback
+                3. themes: list of key themes or issues mentioned
+                """
+            )
             
-            # Save the feedback and analysis result
+            response = analysis_result.get("response", "")
+            
+            # Try to parse as JSON
+            try:
+                result = json.loads(response)
+            except json.JSONDecodeError:
+                # Fallback if not valid JSON
+                result = {
+                    "sentiment": "neutral",
+                    "effectiveness": 5,
+                    "themes": ["Unable to parse detailed themes"],
+                    "raw_analysis": response
+                }
+            
+            # Save the feedback and analysis
             timestamp = datetime.now().isoformat()
             feedback_data = {
                 "feedback": feedback,
-                "sentiment": result[0],
+                "analysis": result,
                 "timestamp": timestamp
             }
             
@@ -176,6 +218,24 @@ class MindfulnessPlugin(KernelPlugin):
                     id=timestamp
                 )
             
-            return result[0]  # Return just the sentiment analysis result
+            # Log successful analysis with Azure telemetry
+            logging.info("Analyzed mindfulness feedback", extra={
+                "custom_dimensions": {
+                    "correlation_id": correlation_id,
+                    "sentiment": result.get("sentiment", "unknown"),
+                    "effectiveness": result.get("effectiveness", 0)
+                }
+            })
+            
+            return result
+            
         except Exception as e:
+            # Log error with Azure telemetry
+            logging.error(f"Error analyzing feedback: {str(e)}", extra={
+                "custom_dimensions": {
+                    "correlation_id": correlation_id,
+                    "error": str(e),
+                    "error_type": type(e).__name__
+                }
+            })
             return {"error": f"Error analyzing feedback: {str(e)}"}
