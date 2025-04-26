@@ -3,88 +3,189 @@ import os
 import uuid
 from typing import List, Optional, Dict, Any
 from datetime import datetime
+import logging
 
-import azure.cosmos.cosmos_client as cosmos_client
-import azure.cosmos.exceptions as exceptions
-from azure.cosmos.partition_key import PartitionKey
+from azure.cosmos.aio import CosmosClient
+from azure.cosmos import PartitionKey, exceptions
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from opencensus.ext.azure.log_exporter import AzureLogHandler
 
 from shared.models.user import User
 from shared.models.journal import JournalEntry
 from shared.models.mood import MoodLog
-from infrastructure.config.settings import get_settings
 
-settings = get_settings()
+# Configure logging with Azure Application Insights
+logger = logging.getLogger(__name__)
+if os.environ.get("APPLICATIONINSIGHTS_CONNECTION_STRING"):
+    logger.addHandler(AzureLogHandler())
 
 class CosmosService:
-    """Service for interacting with Azure Cosmos DB"""
+    """
+    Service for Azure Cosmos DB operations including user management.
+    
+    This class handles database operations following Azure best practices 
+    for security, resilience, and performance.
+    """
     
     def __init__(self):
-        # Parse connection string to get endpoint and key
-        conn_str = settings["cosmos_connection_string"]
-        parts = dict(part.split('=', 1) for part in conn_str.split(';') if part)
-        endpoint = parts.get('AccountEndpoint')
-        key = parts.get('AccountKey')
-        
-        # Initialize the Cosmos client with separate URL and credential
-        self.client = cosmos_client.CosmosClient(
-            url=endpoint,
-            credential=key
-        )
-        
-        # Create database if it doesn't exist
-        db_name = settings["cosmos_database_name"]
-        self.database = self.client.create_database_if_not_exists(db_name)
-        
-        # Create containers if they don't exist
-        self.users_container = self.database.create_container_if_not_exists(
-            id="users",
-            partition_key=PartitionKey(path="/id")
-        )
-        
-        self.journal_container = self.database.create_container_if_not_exists(
-            id="journal_entries",
-            partition_key=PartitionKey(path="/user_id")
-        )
-        
-        self.mood_container = self.database.create_container_if_not_exists(
-            id="mood_logs",
-            partition_key=PartitionKey(path="/user_id")
-        )
-    
-    # User methods
-    async def get_user(self, user_id: str) -> Optional[User]:
-        """Get a user by ID"""
+        """Initialize the CosmosService with proper connection handling."""
         try:
-            query = f"SELECT * FROM c WHERE c.id = '{user_id}'"
-            results = self.users_container.query_items(
-                query=query,
-                enable_cross_partition_query=True
-            )
+            connection_string = os.environ.get("COSMOS_CONNECTION_STRING")
+            db_name = os.environ.get("COSMOS_DATABASE_NAME", "aifrontiers")
             
-            items = list(results)
-            if not items:
-                return None
+            if not connection_string:
+                raise ValueError("COSMOS_CONNECTION_STRING environment variable not set")
                 
+            # Create the client with proper connection mode
+            self.client = CosmosClient.from_connection_string(connection_string)
+            self.database = self.client.get_database_client(db_name)
+            
+            # Get container clients
+            self.users_container = self.database.get_container_client("users")
+            self.journal_container = self.database.get_container_client("journal_entries")
+            self.mood_container = self.database.get_container_client("mood_logs")
+            
+            logger.info("CosmosService initialized successfully")
+        except Exception as e:
+            logger.error(f"Failed to initialize CosmosService: {str(e)}", exc_info=True)
+            raise
+    
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        retry=retry_if_exception_type(exceptions.CosmosHttpResponseError)
+    )
+    async def get_user_by_email(self, email: str) -> Optional[User]:
+        """
+        Retrieves a user by their email address.
+        
+        Args:
+            email: Email address of the user to retrieve
+            
+        Returns:
+            User object if found, None otherwise
+        """
+        try:
+            correlation_id = f"get_user_email_{uuid.uuid4().hex[:8]}"
+            logger.info(f"Retrieving user by email: {email} [correlation_id: {correlation_id}]")
+            
+            # Modify query to sort by creation date (newest first)
+            query = "SELECT * FROM c WHERE c.email = @email ORDER BY c.created_at DESC"
+            parameters = [{"name": "@email", "value": email}]
+            
+            items = []
+            
+            # Execute query - remove enable_cross_partition_query parameter since it's not supported
+            async for item in self.users_container.query_items(
+                query=query,
+                parameters=parameters
+            ):
+                items.append(item)
+            
+            if not items:
+                logger.info(f"No user found with email {email} [correlation_id: {correlation_id}]")
+                return None
+            
+            if len(items) > 1:
+                logger.warning(f"Found {len(items)} users with email {email}, returning most recent [correlation_id: {correlation_id}]")
+            
             return User(**items[0])
-        except exceptions.CosmosResourceNotFoundError:
+            
+        except Exception as e:
+            logger.error(f"Error retrieving user by email: {str(e)} [correlation_id: {correlation_id}]", exc_info=True)
             return None
     
-    async def create_user(self, id: str, email: str, subscription_tier: str = "free") -> User:
-        """Create a new user"""
-        user_data = {
-            "id": id,
-            "email": email,
-            "created_at": datetime.utcnow().isoformat(),
-            "subscription_tier": subscription_tier,
-            "preferences": {},
-            "profile": {},
-            "type": "user"
-        }
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        retry=retry_if_exception_type(exceptions.CosmosHttpResponseError)
+    )
+    async def get_user(self, user_id: str) -> Optional[User]:
+        """
+        Retrieves a user by their ID with retry mechanism.
         
-        created_item = self.users_container.create_item(body=user_data)
-        return User(**created_item)
+        Args:
+            user_id: ID of the user to retrieve
+            
+        Returns:
+            User object if found, None otherwise
+            
+        Raises:
+            Exception: If a database error occurs that can't be handled by retries
+        """
+        try:
+            # Generate correlation ID for request tracing
+            correlation_id = f"get_user_{uuid.uuid4().hex[:8]}"
+            logger.info(f"Retrieving user by ID: {user_id} [correlation_id: {correlation_id}]")
+            
+            # Using read_item for direct ID lookup (more efficient than query)
+            try:
+                item = await self.users_container.read_item(
+                    item=user_id, 
+                    partition_key=user_id  # Assuming ID is the partition key
+                )
+                logger.info(f"User with ID {user_id} retrieved successfully [correlation_id: {correlation_id}]")
+                return User(**item)
+            except exceptions.CosmosResourceNotFoundError:
+                logger.info(f"User with ID {user_id} not found [correlation_id: {correlation_id}]")
+                return None
+                
+        except exceptions.CosmosHttpResponseError as e:
+            # Log specific Cosmos DB error for better diagnostics
+            logger.error(f"Cosmos DB error retrieving user by ID {user_id}: {str(e)} [correlation_id: {correlation_id}]", 
+                        exc_info=True)
+            raise  # Let the retry decorator handle the retry
+        except Exception as e:
+            # Log unexpected errors
+            logger.error(f"Unexpected error retrieving user by ID {user_id}: {str(e)} [correlation_id: {correlation_id}]", 
+                        exc_info=True)
+            return None
     
-    # Journal methods
+    async def create_user(self, id: str, email: str, hashed_password: str) -> User:
+        """
+        Creates a new user in Cosmos DB with secure password storage.
+        
+        Args:
+            id: Unique identifier for the user
+            email: User's email address
+            hashed_password: Pre-hashed password for secure storage
+            
+        Returns:
+            Created User object
+            
+        Raises:
+            Exception: If user creation fails
+        """
+        try:
+            # Generate correlation ID for request tracing
+            correlation_id = f"create_user_{uuid.uuid4().hex[:8]}"
+            logger.info(f"Creating new user with email: {email} [correlation_id: {correlation_id}]")
+            
+            # Prepare user data with default values
+            current_time = datetime.utcnow()
+            user_data = {
+                "id": id,
+                "email": email,
+                "hashed_password": hashed_password,
+                "created_at": current_time.isoformat(),
+                "subscription_tier": "free",
+                "preferences": {},
+                "profile": {}
+            }
+            
+            # Create the user in Cosmos DB
+            created_item = await self.users_container.create_item(body=user_data)
+            logger.info(f"User with email {email} created successfully [correlation_id: {correlation_id}]")
+            
+            return User(**created_item)
+            
+        except exceptions.CosmosResourceExistsError:
+            logger.error(f"User with ID {id} already exists [correlation_id: {correlation_id}]")
+            raise ValueError(f"User with ID {id} already exists")
+        except Exception as e:
+            logger.error(f"Failed to create user: {str(e)} [correlation_id: {correlation_id}]", exc_info=True)
+            raise
+    
     async def get_journal_entries(self, user_id: str, skip: int = 0, limit: int = 10) -> List[JournalEntry]:
         """Get journal entries for a user"""
         query = f"""
@@ -94,27 +195,48 @@ class CosmosService:
         OFFSET {skip} LIMIT {limit}
         """
         
-        items = list(self.journal_container.query_items(
-            query=query,
-            enable_cross_partition_query=True
-        ))
+        items = []
+        async for item in self.journal_container.query_items(query=query):
+            items.append(item)
         
         return [JournalEntry(**item) for item in items]
     
-    async def get_journal_entry(self, entry_id: str) -> Optional[JournalEntry]:
-        """Get a specific journal entry"""
+    async def get_journal_entry(self, entry_id: str, user_id: str = None) -> Optional[JournalEntry]:
+        """Get a specific journal entry
+        
+        Args:
+            entry_id: ID of the journal entry to retrieve
+            user_id: Optional user ID for partition key (if container is partitioned)
+            
+        Returns:
+            JournalEntry object if found, None otherwise
+        """
         try:
+            # Generate correlation ID for tracing
+            correlation_id = f"get_journal_{uuid.uuid4().hex[:8]}"
+            logger.info(f"Retrieving journal entry by ID: {entry_id} [correlation_id: {correlation_id}]")
+            
             query = f"SELECT * FROM c WHERE c.id = '{entry_id}'"
-            items = list(self.journal_container.query_items(
-                query=query,
-                enable_cross_partition_query=True
-            ))
+            
+            # Add user_id condition if provided
+            if user_id:
+                query += f" AND c.user_id = '{user_id}'"
+                
+            items = []
+            async for item in self.journal_container.query_items(query=query):
+                items.append(item)
             
             if not items:
+                logger.info(f"Journal entry with ID {entry_id} not found [correlation_id: {correlation_id}]")
                 return None
                 
+            logger.info(f"Retrieved journal entry: {entry_id} [correlation_id: {correlation_id}]")
             return JournalEntry(**items[0])
         except exceptions.CosmosResourceNotFoundError:
+            logger.warning(f"Journal entry with ID {entry_id} not found [correlation_id: {correlation_id}]")
+            return None
+        except Exception as e:
+            logger.error(f"Error retrieving journal entry: {str(e)} [correlation_id: {correlation_id}]", exc_info=True)
             return None
     
     async def create_journal_entry(
@@ -140,31 +262,73 @@ class CosmosService:
             "type": "journal_entry"
         }
         
-        created_item = self.journal_container.create_item(body=entry_data)
+        created_item = await self.journal_container.create_item(body=entry_data)
         return JournalEntry(**created_item)
     
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        retry=retry_if_exception_type(exceptions.CosmosHttpResponseError)
+    )
     async def update_journal_entry(
         self,
         entry_id: str,
         user_id: str,
-        update_data: Dict[str, Any]
-    ) -> JournalEntry:
-        """Update a journal entry"""
-        entry = await self.get_journal_entry(entry_id)
-        if not entry or entry.user_id != user_id:
+        **update_fields
+    ) -> Optional[JournalEntry]:
+        """
+        Update a journal entry with new values.
+        
+        Args:
+            entry_id: ID of the journal entry to update
+            user_id: ID of the user who owns the entry
+            **update_fields: Keyword arguments for fields to update
+            
+        Returns:
+            Updated JournalEntry object if successful, None otherwise
+            
+        Raises:
+            CosmosHttpResponseError: If a database operation fails
+        """
+        try:
+            correlation_id = f"update_journal_{uuid.uuid4().hex[:8]}"
+            logger.info(f"Updating journal entry: {entry_id} [correlation_id: {correlation_id}]")
+            
+            # Get the existing entry
+            entry = await self.get_journal_entry(entry_id)
+            if not entry or entry.user_id != user_id:
+                logger.warning(f"Journal entry {entry_id} not found or not owned by user {user_id} [correlation_id: {correlation_id}]")
+                return None
+            
+            # Convert entry to dictionary with proper JSON serialization for datetime objects
+            update_dict = {}
+            for key, value in entry.dict().items():
+                if isinstance(value, datetime):
+                    update_dict[key] = value.isoformat()
+                else:
+                    update_dict[key] = value
+            
+            # Update with new fields
+            update_dict.update(update_fields)
+            
+            # Add updated timestamp
+            update_dict["updated_at"] = datetime.utcnow().isoformat()
+            
+            # Update in database
+            updated_item = await self.journal_container.replace_item(
+                item=entry_id,
+                body=update_dict
+            )
+            
+            logger.info(f"Journal entry {entry_id} updated successfully [correlation_id: {correlation_id}]")
+            return JournalEntry(**updated_item)
+            
+        except exceptions.CosmosResourceNotFoundError:
+            logger.warning(f"Journal entry {entry_id} not found during update [correlation_id: {correlation_id}]")
             return None
-        
-        # Prepare update document
-        update_dict = {**entry.dict(), **update_data}
-        update_dict["updated_at"] = datetime.utcnow().isoformat()
-        
-        # Update in database
-        updated_item = self.journal_container.replace_item(
-            item=entry_id,
-            body=update_dict
-        )
-        
-        return JournalEntry(**updated_item)
+        except Exception as e:
+            logger.error(f"Error updating journal entry: {str(e)} [correlation_id: {correlation_id}]", exc_info=True)
+            raise
     
     async def delete_journal_entry(self, entry_id: str, user_id: str) -> bool:
         """Delete a journal entry"""
@@ -172,8 +336,116 @@ class CosmosService:
         if not entry or entry.user_id != user_id:
             return False
         
-        self.journal_container.delete_item(item=entry_id, partition_key=user_id)
+        await self.journal_container.delete_item(item=entry_id, partition_key=user_id)
         return True
+
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        retry=retry_if_exception_type(exceptions.CosmosHttpResponseError)
+    )
+    async def create_mood_log(
+        self,
+        user_id: str,
+        mood_score: int,
+        mood_labels: List[str],
+        context: str = None,
+        factors: List[str] = None,
+        location: str = None
+    ) -> MoodLog:
+        """
+        Create a new mood log entry for a user.
+        
+        Args:
+            user_id: ID of the user this mood log belongs to
+            mood_score: Numeric score representing user's mood (typically 1-10)
+            mood_labels: List of descriptive mood labels
+            context: Optional context when mood was logged (e.g., "morning", "after work")
+            factors: Optional list of factors affecting mood
+            location: Optional location where mood was recorded
+            
+        Returns:
+            Created MoodLog object
+            
+        Raises:
+            CosmosHttpResponseError: If a database operation fails
+        """
+        try:
+            correlation_id = f"create_mood_{uuid.uuid4().hex[:8]}"
+            logger.info(f"Creating mood log for user: {user_id} [correlation_id: {correlation_id}]")
+            
+            # Generate unique ID for the mood log
+            mood_log_id = str(uuid.uuid4())
+            current_time = datetime.utcnow()
+            
+            # Prepare mood log data
+            mood_data = {
+                "id": mood_log_id,
+                "user_id": user_id,
+                "mood_score": mood_score,
+                "mood_labels": mood_labels,
+                "timestamp": current_time.isoformat(),
+                "context": context,
+                "factors": factors or [],
+                "location": location,
+                "created_at": current_time.isoformat(),
+                "updated_at": current_time.isoformat()
+            }
+            
+            # Create item in Cosmos DB - remove the partition_key parameter since 
+            # the SDK extracts it from the mood_data object
+            created_item = await self.mood_container.create_item(body=mood_data)
+            
+            logger.info(f"Created mood log with ID: {mood_log_id} [correlation_id: {correlation_id}]")
+            
+            # Return as MoodLog model instance
+            return MoodLog(**created_item)
+            
+        except exceptions.CosmosHttpResponseError as e:
+            logger.error(f"Cosmos DB error creating mood log: {str(e)} [correlation_id: {correlation_id}]", 
+                        exc_info=True)
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error creating mood log: {str(e)} [correlation_id: {correlation_id}]", 
+                        exc_info=True)
+            raise ValueError(f"Failed to create mood log: {str(e)}")
+
+    async def get_mood_logs(self, user_id: str, limit: int = 10, skip: int = 0) -> List[MoodLog]:
+        """
+        Retrieve mood logs for a specific user.
+        
+        Args:
+            user_id: ID of the user to fetch mood logs for
+            limit: Maximum number of logs to return (default: 10)
+            skip: Number of logs to skip (for pagination, default: 0)
+            
+        Returns:
+            List of MoodLog objects for the user
+        """
+        try:
+            # Generate correlation ID for tracing
+            correlation_id = f"get_moods_{uuid.uuid4().hex[:8]}"
+            logger.info(f"Retrieving mood logs for user: {user_id} [correlation_id: {correlation_id}]")
+            
+            # Query to fetch mood logs ordered by timestamp (newest first)
+            query = f"""
+            SELECT * FROM c 
+            WHERE c.user_id = '{user_id}' 
+            ORDER BY c.timestamp DESC 
+            OFFSET {skip} LIMIT {limit}
+            """
+            
+            items = []
+            async for item in self.mood_container.query_items(query=query):
+                items.append(item)
+            
+            logger.info(f"Retrieved {len(items)} mood logs for user {user_id} [correlation_id: {correlation_id}]")
+            return [MoodLog(**item) for item in items]
+            
+        except Exception as e:
+            logger.error(f"Error retrieving mood logs for user {user_id}: {str(e)} [correlation_id: {correlation_id}]", 
+                       exc_info=True)
+            return []
 
 def check_database_connection() -> bool:
     """Check if the Cosmos DB connection is active"""

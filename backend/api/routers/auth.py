@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from datetime import timedelta
 from shared.models.user import User, UserCreate, UserUpdate
-from backend.shared.auth import get_current_user, authenticate_user, create_access_token
+from backend.shared.auth import get_current_user, authenticate_user, create_access_token, get_password_hash
 from backend.shared.cosmos import CosmosService
 import uuid
 
@@ -18,9 +18,38 @@ async def get_current_user_profile(current_user: User = Depends(get_current_user
 
 @router.post("/register", response_model=User)
 async def register_user(user_data: UserCreate):
-    """Register a new user"""
-    user_id = str(uuid.uuid4())  # Generate a unique ID for the user
-    return await cosmos_service.create_user(id=user_id, email=user_data.email)
+    """
+    Register a new user with secure password hashing.
+    
+    Args:
+        user_data: User registration data including email and password
+        
+    Returns:
+        Newly created user object
+        
+    Raises:
+        HTTPException: If email is already registered or other creation errors
+    """
+    # Check if user already exists
+    existing_user = await cosmos_service.get_user_by_email(user_data.email)
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already registered"
+        )
+    
+    # Generate a unique ID for the user
+    user_id = str(uuid.uuid4())
+    
+    # Hash the password securely
+    hashed_password = get_password_hash(user_data.password)
+    
+    # Create user with email and hashed password
+    return await cosmos_service.create_user(
+        id=user_id,
+        email=user_data.email,
+        hashed_password=hashed_password
+    )
 
 @router.put("/update", response_model=User)
 async def update_user_profile(
