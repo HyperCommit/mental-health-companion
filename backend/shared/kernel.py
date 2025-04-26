@@ -29,87 +29,30 @@ class KernelService:
         self.kernel = self._initialize_kernel()
         self.correlation_prefix = f"mhc-{uuid.uuid4().hex[:6]}"
     
-    def _initialize_kernel(self):
-        """Initialize and configure Semantic Kernel with Azure OpenAI models"""
-        kernel = sk.Kernel()
-        
+    def _initialize_kernel(self) -> sk.Kernel:
+        """Initialize the semantic kernel with Azure OpenAI configuration"""
         try:
-            # Get API key securely
-            azure_api_key = self._get_secret("AZURE_OPENAI_API_KEY")
-            azure_endpoint = os.environ.get("AZURE_OPENAI_ENDPOINT")
+            kernel = sk.Kernel()
             
-            # Get model configurations
-            text_deployment = os.environ.get("AZURE_OPENAI_DEPLOYMENT_TEXT")
-            classification_deployment = os.environ.get("AZURE_OPENAI_DEPLOYMENT_CLASSIFICATION")
+            # Load configuration from environment variables
+            api_key = os.environ.get("AZURE_OPENAI_API_KEY")
+            endpoint = os.environ.get("AZURE_OPENAI_ENDPOINT")
+            deployment_name = os.environ.get("AZURE_OPENAI_MODEL_TEXT")
             
-            # Optional: Get model IDs if different from deployment names
-            text_model = os.environ.get("AZURE_OPENAI_MODEL_TEXT", text_deployment)
-            classification_model = os.environ.get("AZURE_OPENAI_MODEL_CLASSIFICATION", classification_deployment)
-            
-            # Configure text completion service for conversation
-            conversation_service = self._create_azure_chat_completion(
-                deployment_name=text_deployment,
-                endpoint=azure_endpoint,
-                api_key=azure_api_key,
-                model_id=text_model
+            # Create Azure OpenAI service using the correct parameter name
+            azure_chat_service = AzureChatCompletion(
+                deployment_name=deployment_name,  # Changed from model_id to deployment_name
+                endpoint=endpoint,
+                api_key=api_key
             )
             
             # Add the service to the kernel
-            kernel.add_chat_service(
-                service_id="conversation",
-                service=conversation_service
-            )
-            logging.info(f"Configured Azure OpenAI text completion model: {text_deployment}")
+            kernel.add_service(azure_chat_service)
             
-            # Configure classification service for sentiment analysis
-            classification_service = self._create_azure_chat_completion(
-                deployment_name=classification_deployment,
-                endpoint=azure_endpoint,
-                api_key=azure_api_key,
-                model_id=classification_model
-            )
-            kernel.add_chat_service(
-                service_id="classification",
-                service=classification_service
-            )
-            logging.info(f"Configured Azure OpenAI classification model: {classification_deployment}")
-            
-            # Register plugins
-            self._register_plugins(kernel)
-            
+            logging.info("Azure OpenAI service initialized successfully")
             return kernel
-            
         except Exception as e:
-            logging.error(f"Failed to initialize kernel: {str(e)}")
             raise RuntimeError(f"Kernel initialization failed: {str(e)}")
-    
-    def _create_azure_chat_completion(self, deployment_name: str, endpoint: str, 
-                                      api_key: str, model_id: str = None) -> AzureChatCompletion:
-        """Create an Azure OpenAI chat completion service with proper error handling"""
-        try:
-            # For Azure environments, prefer managed identity authentication
-            if "IDENTITY_ENDPOINT" in os.environ:
-                logging.info("Using managed identity for Azure OpenAI authentication")
-                # Use DefaultAzureCredential for managed identity authentication
-                service = AzureChatCompletion(
-                    deployment_name=deployment_name,
-                    endpoint=endpoint,
-                    model_id=model_id
-                    # No api_key - will use DefaultAzureCredential
-                )
-            else:
-                # For development environments, use API key authentication
-                service = AzureChatCompletion(
-                    deployment_name=deployment_name,
-                    endpoint=endpoint,
-                    api_key=api_key,
-                    model_id=model_id
-                )
-                
-            return service
-        except Exception as e:
-            logging.error(f"Failed to initialize Azure OpenAI service for {deployment_name}: {str(e)}")
-            raise RuntimeError(f"Azure OpenAI service initialization failed: {str(e)}")
     
     def _get_secret(self, secret_name):
         """Get a secret from Azure Key Vault or environment variables"""
